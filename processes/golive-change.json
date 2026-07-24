@@ -1,0 +1,46 @@
+{
+  "id": "golive-change",
+  "name": "Giai đoạn 4: Cập nhật change item",
+  "version": "1.0.0",
+  "description": "Cập nhật change item — đính kèm hồ sơ & push approvals",
+  "lastUpdated": "2026-07-24",
+  "order": 8,
+  "status": "active",
+  "group": "Golive",
+  "whenToApply": "Sau khi có Mail Checklist & Pentest — cập nhật hồ sơ change",
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Đính kèm mail PO",
+      "actions": [
+        "Attach mail PO confirm pass UAT"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Đính kèm Test Plan",
+      "actions": [
+        "Attach test plan bản đầy đủ"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Đính kèm các cấu phần khác nếu có",
+      "actions": [
+        "Attach các cấu phần / hồ sơ liên quan khác nếu có (vd mail confirm pentest)"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Push CAB và các bên approvals",
+      "actions": [
+        "Push CAB approval sau 17:00 (5 PM)",
+        "Follow up approval từ các bên liên quan"
+      ]
+    }
+  ],
+  "notes": [
+    "Title change: nhờ PO cung cấp",
+    "Change go-live mẫu: https://itsm.example/changes/{id}"
+  ]
+}

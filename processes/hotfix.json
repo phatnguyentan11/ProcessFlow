@@ -1,0 +1,87 @@
+{
+  "id": "hotfix",
+  "name": "Hotfix",
+  "version": "1.0.0",
+  "description": "Sửa lỗi khẩn cấp trên production",
+  "lastUpdated": "2026-07-23",
+  "order": 11,
+  "status": "active",
+  "group": "Xử lý sự cố",
+  "whenToApply": "Bug trên production ảnh hưởng user - Critical",
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Critical Bug Detected",
+      "description": "Phát hiện bug critical trên prod"
+    },
+    {
+      "step": 2,
+      "name": "Emergency Triage",
+      "description": "Triage khẩn cấp",
+      "items": [
+        "Confirm issue",
+        "Assess impact",
+        "Assign hotfix owner"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Create Hotfix Branch",
+      "description": "Tạo branch đặc biệt",
+      "command": "git checkout -b hotfix/[bug-id]-[date]"
+    },
+    {
+      "step": 4,
+      "name": "Fix & Test Locally",
+      "description": "Sửa và test local",
+      "items": [
+        "Fix code",
+        "Test locally",
+        "Verify fix"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Code Review (Fast Track)",
+      "description": "Review nhanh",
+      "reviewer": "TL hoặc Lead",
+      "approvals": 1
+    },
+    {
+      "step": 6,
+      "name": "Deploy to Production",
+      "description": "Deploy lên prod"
+    },
+    {
+      "step": 7,
+      "name": "Monitor",
+      "description": "Giám sát 30 phút đầu"
+    }
+  ],
+  "checklist": [
+    "Code fix viết lại (không cherry-pick từ dev)",
+    "Test locally trước khi deploy",
+    "Code review (TL hoặc Lead)",
+    "Deploy vào thời điểm ít traffic",
+    "Monitoring ngay sau deploy",
+    "Rollback plan ready"
+  ],
+  "postHotfix": {
+    "tasks": [
+      "Check error logs",
+      "Verify no regression",
+      "Update status ticket",
+      "Create postmortem"
+    ]
+  },
+  "output": {
+    "file": "docs/processes/hotfix-postmortem-[date].md",
+    "template": "# Hotfix Postmortem\n\n## Bug ID\n[bug-id]\n\n## Root Cause\n[analysis]\n\n## Fix Applied\n[file:lines]\n\n## Impact\n- [downtime duration]\n- [affected users]\n\n## Improvement\n- [prevention measure]"
+  },
+  "notes": [
+    "Không qua PR thông thường - dùng fast track",
+    "Deploy nhanh - tối đa 1-2 giờ từ khi phát hiện",
+    "Monitor 30 phút - đảm bảo ổn định",
+    "Postmortem - learn và prevent"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "golive-exec",
+  "name": "Giai đoạn 5: Thực thi Go-live",
+  "version": "1.0.0",
+  "description": "Thực thi go-live: tạo group Production, gửi mail Start/End-Change",
+  "lastUpdated": "2026-07-24",
+  "order": 9,
+  "status": "active",
+  "group": "Golive",
+  "whenToApply": "Sau khi change được duyệt — thực thi cửa sổ go-live",
+  "workflow": [
+    {
+      "name": "Tạo group Go-live Production",
+      "actions": [
+        "Tạo group sau khi change được duyệt ~4h",
+        "Tên group format: [SmartSales][ChangeID {id change}] {title change}"
+      ]
+    },
+    {
+      "name": "Thông tin tới tất cả user cần tham gia",
+      "actions": [
+        "Add / thông tin tới tất cả user cần: [TODO danh sách user]",
+        "Gom các bên liên quan: SS, DTI, BU, Azure, v.v..."
+      ]
+    },
+    {
+      "name": "Gửi mail xin VPN",
+      "emailTemplate": {
+        "subject": "[SmartSales] Xin cấp VPN remote hỗ trợ go-live [dd/MM/yyyy]",
+        "to": "[TODO danh sách user cần VPN]",
+        "wording": "Kính nhờ hỗ trợ cấp VPN remote cho các user tham gia go-live."
+      }
+    },
+    {
+      "name": "Mail Start-Change",
+      "emailTemplate": {
+        "subject": "[SmartSales][ChangeID {id change}] Start-Change — {title change}",
+        "to": "Toàn bộ stakeholders",
+        "wording": "Em xin phép bắt đầu thực hiện change go-live [title change] theo kế hoạch."
+      }
+    },
+    {
+      "name": "Mail End-Change",
+      "emailTemplate": {
+        "subject": "[SmartSales][ChangeID {id change}] End-Change — {title change}",
+        "to": "Toàn bộ stakeholders",
+        "wording": "Em xác nhận đã hoàn tất change go-live [title change]."
+      }
+    }
+  ]
+}

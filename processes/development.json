@@ -1,0 +1,82 @@
+{
+  "id": "development",
+  "name": "Development (TDD)",
+  "version": "1.0.0",
+  "description": "Phát triển theo phương pháp Test-Driven Development",
+  "lastUpdated": "2026-07-23",
+  "order": 3,
+  "status": "active",
+  "group": "Phát triển",
+  "whenToApply": "Khi có plan approved",
+  "workflow": [
+    {
+      "name": "RED Phase",
+      "description": "Write test first",
+      "steps": [
+        "Write test first",
+        "Run test (FAIL)",
+        "Confirm test covers expected behavior"
+      ]
+    },
+    {
+      "name": "GREEN Phase",
+      "description": "Write minimal implementation",
+      "steps": [
+        "Write minimal implementation",
+        "Run test (PASS)",
+        "Make code work"
+      ]
+    },
+    {
+      "name": "REFACTOR Phase",
+      "description": "Clean up code",
+      "steps": [
+        "Clean up code",
+        "Add comments if needed",
+        "Run tests again"
+      ]
+    }
+  ],
+  "gitWorkflow": {
+    "createBranch": "git checkout -b feature/[feature-name]-[ticket-id]",
+    "testLocation": "tests/[feature]/",
+    "implementationLocation": "src/[feature]/",
+    "commitMessageFormat": "feat: [description]",
+    "pushBranch": "git push origin feature/[feature-name]"
+  },
+  "outputs": [
+    {
+      "name": "Test files",
+      "path": "tests/[feature]/",
+      "description": "Test files"
+    },
+    {
+      "name": "Implementation",
+      "path": "src/[feature]/",
+      "description": "Code implementation"
+    },
+    {
+      "name": "Dev log",
+      "path": "docs/features/[feature]/03-dev-log.md",
+      "description": "Dev log (optional)"
+    }
+  ],
+  "qualityRules": [
+    "Functions < 50 lines",
+    "Files < 800 lines",
+    "No deep nesting (> 4 levels)",
+    "Clear naming (variables, functions)",
+    "No magic numbers",
+    "No console.log/debugger"
+  ],
+  "testRequirements": {
+    "minCoverage": 80,
+    "testTypes": ["unit", "integration"],
+    "mustPass": true
+  },
+  "notes": [
+    "Không commit code chưa test",
+    "Không merge nếu test fails",
+    "Viết test first - không viết sau"
+  ]
+}

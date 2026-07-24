@@ -1,0 +1,41 @@
+{
+  "id": "golive-prep",
+  "name": "Giai đoạn 2: Mail Checklist Golive",
+  "version": "1.0.0",
+  "description": "Mail checklist golive — gửi Team lead duyệt, CC cả team",
+  "lastUpdated": "2026-07-24",
+  "order": 6,
+  "status": "active",
+  "group": "Golive",
+  "whenToApply": "Trước ngày golive — gửi checklist cho Team lead duyệt (CC cả team)",
+  "emailTemplate": {
+    "subject": "[SmartSales] [title từ PO]",
+    "to": "Team lead",
+    "cc": "Cả team (BA, PO, BE, FE, QC)",
+    "wording": "Em gửi checklist golive \"[title từ PO]\" ngày [dd/MM/yyyy], nhờ anh và team review nội dung giúp em.",
+    "content": [
+      { "name": "Title change", "description": "[title từ PO]" },
+      { "name": "Mục đích / lợi ích thực hiện change", "description": "[lấy từ PO]" },
+      {
+        "name": "Các công việc sẽ thực hiện",
+        "actions": [
+          "Apply [Việc] cho [List Service, Database]",
+          "Clear cache",
+          "APIGW mapping / grant permission"
+        ]
+      },
+      { "name": "Merge request / pull request", "description": "[List PRs]" },
+      { "name": "Dịch vụ ảnh hưởng", "description": "Thường mặc định SmartSales không downtime (… các phần mặc định)" },
+      { "name": "Hệ thống liên quan", "description": "Các phần integration + đầu mối" }
+    ]
+  },
+  "example": [
+    "Kính gửi các anh/chị, em tạo group này để trao đổi change [ChangeID {id}] [SmartSales] [tên tính năng]",
+    "Giờ start change: HH:mm dd/MM/yyyy",
+    "Em gửi lại cấu phần golive như sau:",
+    "Apply patching by pull request on ADO for build and deploy:",
+    "{repo}: https://dev.azure.com/{org}/{project}/_git/{repo}/pullrequest/{id}",
+    "Verify test plan",
+    "Everyone"
+  ]
+}

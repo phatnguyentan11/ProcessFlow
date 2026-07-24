@@ -1,0 +1,86 @@
+{
+  "id": "planning",
+  "name": "Planning & Estimation",
+  "version": "1.0.0",
+  "description": "Lên kế hoạch chi tiết và ước lượng effort trước khi development",
+  "lastUpdated": "2026-07-23",
+  "order": 2,
+  "status": "active",
+  "group": "Phát triển",
+  "whenToApply": "Sau khi analysis được PO approve",
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Read Analysis",
+      "description": "Đọc tài liệu phân tích"
+    },
+    {
+      "step": 2,
+      "name": "Technical Planning",
+      "description": "Lên kế hoạch kỹ thuật",
+      "items": [
+        "Tech stack selection",
+        "Database schema design",
+        "API design",
+        "Component structure"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Task Breakdown",
+      "description": "Chia nhỏ task",
+      "items": [
+        "Split thành smaller tasks",
+        "Identify dependencies",
+        "Estimate each task"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Review with Team",
+      "description": "Review với team"
+    },
+    {
+      "step": 5,
+      "name": "Write Plan Document",
+      "description": "Ghi vào document"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Plan document",
+      "path": "docs/features/[feature]/02-plan.md",
+      "description": "Tài liệu kế hoạch chi tiết"
+    }
+  ],
+  "estimationGuidelines": {
+    "bugFix": {
+      "unit": "hours",
+      "note": "Small fixes < 2h"
+    },
+    "smallFeature": {
+      "unit": "days",
+      "range": "0.5-1",
+      "note": "Single screen change"
+    },
+    "mediumFeature": {
+      "unit": "days",
+      "range": "2-3",
+      "note": "Multiple components"
+    },
+    "largeFeature": {
+      "unit": "days",
+      "range": "4+",
+      "note": "Split into smaller"
+    }
+  },
+  "outputFormat": {
+    "file": "docs/features/[feature-name]/02-plan.md",
+    "template": "# [Feature Name] - Plan\n\n## Overview\n- **Feature**: [name]\n- **Ticket**: [ticket-id]\n- **Estimated**: [X] days\n\n## Technical Design\n### Architecture\n- [Description]\n\n### Database\n- [Schema design]\n\n### API\n- [API endpoints]\n\n## Task Breakdown\n| Task | Est (days) | Dependencies |\n|------|------------|--------------|\n| [task] | [est] | [deps] |\n\n## Risks & Mitigation\n| Risk | Impact | Mitigation |\n|------|--------|------------|\n| [risk] | [high/med/low] | [action] |"
+  },
+  "notes": [
+    "Break down thành tasks nhỏ (max 1 day each)",
+    "Include buffer cho unexpected issues",
+    "Document risks và mitigation"
+  ]
+}

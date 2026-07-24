@@ -1,0 +1,83 @@
+{
+  "id": "bug-fix",
+  "name": "Bug Fix (Normal)",
+  "version": "1.0.0",
+  "description": "Sửa lỗi thường (không khẩn cấp)",
+  "lastUpdated": "2026-07-23",
+  "order": 10,
+  "status": "active",
+  "group": "Xử lý sự cố",
+  "whenToApply": "Bug phát hiện trong dev/staging, không ảnh hưởng production",
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Bug Reported",
+      "description": "Bug được báo cáo"
+    },
+    {
+      "step": 2,
+      "name": "Triage",
+      "description": "Phân loại bug",
+      "items": [
+        "Verify bug exists",
+        "Assign developer",
+        "Set priority"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Analysis",
+      "description": "Phân tích",
+      "items": [
+        "Reproduce bug",
+        "Identify root cause",
+        "Estimate fix time"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Fix",
+      "description": "Sửa bug",
+      "items": [
+        "Write test (fail first)",
+        "Fix implementation",
+        "Verify test passes"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Review & Merge",
+      "description": "Review và merge"
+    }
+  ],
+  "priorityLevels": [
+    {
+      "name": "Low",
+      "sla": "3-5 days",
+      "description": "Bug không ảnh hưởng"
+    },
+    {
+      "name": "Medium",
+      "sla": "1-2 days",
+      "description": "Bug ảnh hưởng nhẹ"
+    },
+    {
+      "name": "High",
+      "sla": "Same day",
+      "description": "Bug ảnh hưởng user"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Bug fix document",
+      "path": "docs/features/[feature]/bugs/[bug-id].md",
+      "description": "Tài liệu fix bug"
+    }
+  ],
+  "template": "# Bug Fix: [Bug ID]\n\n## Root Cause\n[Description]\n\n## Fix\n- File: [filename]\n- Lines: [range]\n\n## Test\n- [Test case]\n\n## Verification\n- [Verification steps]",
+  "notes": [
+    "Write test first - prevent regression",
+    "Document root cause - learn from mistakes",
+    "Verify fix - trước khi close"
+  ]
+}

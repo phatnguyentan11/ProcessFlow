@@ -1,0 +1,76 @@
+{
+  "id": "task-reception",
+  "name": "Nhận Task",
+  "version": "1.0.0",
+  "description": "Tiếp nhận task từ PO/TL và ghi nhận vào hệ thống",
+  "lastUpdated": "2026-07-23",
+  "order": 1,
+  "status": "active",
+  "group": "Phát triển",
+  "source": ["Jira", "GitHub Issues", "Trello", "Notion"],
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Task Received",
+      "description": "Tiếp nhận task từ PO/TL",
+      "input": {
+        "source": "PO/TL",
+        "format": "Jira ticket/GitHub issue"
+      }
+    },
+    {
+      "step": 2,
+      "name": "Check Task Info",
+      "description": "Kiểm tra thông tin task",
+      "checklist": [
+        "Task ID/Number",
+        "Title/Description",
+        "Acceptance Criteria",
+        "Priority/SLA"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Sanitize & Clarify",
+      "description": "Làm sạch và làm rõ yêu cầu",
+      "actions": [
+        "Hiểu rõ requirements",
+        "Hỏi lại nếu unclear",
+        "Confirm scope với PO"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Record in System",
+      "description": "Ghi vào hệ thống",
+      "actions": [
+        "Jira: Create/Assign ticket",
+        "Notion/Document: Log task"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Feature folder",
+      "path": "docs/features/[feature-name]/",
+      "description": "Folder mới cho feature"
+    },
+    {
+      "name": "Task info",
+      "path": "docs/features/[feature-name]/00-info.md",
+      "description": "Thông tin task (ID, title, AC)"
+    }
+  ],
+  "checklist": [
+    "Đọc kỹ acceptance criteria",
+    "Xác nhận priority với PO",
+    "Ghi lại task ID vào personal log",
+    "Update task status trong tracking",
+    "Inform team nếu là high-priority"
+  ],
+  "notes": [
+    "Không bắt đầu dev khi chưa rõ requirements",
+    "Hỏi lại PO nếu AC không rõ hoặc mâu thuẫn",
+    "Confirm scope trước khi estimation"
+  ]
+}

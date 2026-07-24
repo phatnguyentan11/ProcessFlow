@@ -1,0 +1,73 @@
+{
+  "id": "golive-3rd-party",
+  "name": "Tích hợp 3rd-Party",
+  "version": "1.0.0",
+  "description": "Checklist NOTED khi phát triển tính năng có tích hợp API bên thứ 3",
+  "lastUpdated": "2026-07-24",
+  "order": 4,
+  "status": "active",
+  "group": "Phát triển",
+  "whenToApply": "Khi phát triển tính năng có tích hợp API bên thứ 3 / vendor",
+  "checklist": [
+    {
+      "name": "NOTED – Đối với API mới tích hợp 3rd Party",
+      "items": [
+        "Kiểm tra API 3rd-party đã golive/expose chưa",
+        "Có mail chốt trạng thái golive API từ phía 3rd-party",
+        {
+          "name": "Mapping permission trước và trong ngày golive",
+          "items": [
+            "Grant permission API cho server SmartSales"
+          ]
+        },
+        "Nếu cần, gửi mail riêng nhờ team hạ tầng hỗ trợ",
+        {
+          "name": "Nếu phía vendor/đội bạn golive trước",
+          "items": [
+            "Add task kiểm tra việc gọi API từ server SmartSales (Nguyễn Văn A hỗ trợ)"
+          ]
+        },
+        {
+          "name": "Thêm biến môi trường và KeyVault",
+          "items": [
+            "KV chỉ set 1 lần",
+            "ENV set cho từng service",
+            "Check kỹ KV/ENV trên Production trước khi go-live"
+          ]
+        },
+        {
+          "name": "Quy định gửi TestPlan & Config",
+          "items": [
+            "Testplan + config gửi trước 1 ngày",
+            "Pentest gửi ít nhất 3 ngày trước tất cả scope"
+          ]
+        },
+        {
+          "name": "Nếu có API public ra external",
+          "items": [
+            "Expose API SmartSales qua APIM Prod",
+            "Thêm domain APIM: [domain APIM nội bộ] (=> update sang domain mới) vào ingress [tool] — Người phụ trách: Nguyễn Văn A"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NOTED – Go-live Coordination",
+      "items": [
+        "Trước khi go-live, lấy đầu mối contact của từng store/API phía 3rd-party",
+        {
+          "name": "Các phần liên quan store/3rd-party không trace được",
+          "items": [
+            "Note lại rõ ràng cho BA"
+          ]
+        },
+        {
+          "name": "Khi tạo group go-live",
+          "items": [
+            "Vì có QC tham gia nên add thêm đầu mối bên implement/vendor vào group"
+          ]
+        }
+      ]
+    }
+  ]
+}

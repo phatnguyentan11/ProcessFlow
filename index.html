@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorkHub — Quy trình & Task Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__mark">WH</div>
+        <div class="brand__text">
+          <strong>WorkHub</strong>
+          <span>Process &amp; Task</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Điều hướng chính">
+        <button class="nav__item is-active" data-view="processes" type="button" title="Quy trình">
+          <span class="nav__icon">◆</span><span class="nav__label">Quy trình</span>
+        </button>
+        <button class="nav__item" data-view="tasks" type="button" title="Task / Feature">
+          <span class="nav__icon">▤</span><span class="nav__label">Task / Feature</span>
+        </button>
+      </nav>
+
+      <div class="sidebar__foot">
+        <button id="btn-export" class="btn btn--ghost" type="button" title="Sao lưu toàn bộ task ra file JSON">
+          <span class="btn__icon">⬇</span><span class="nav__label">Export</span>
+        </button>
+        <button id="btn-import" class="btn btn--ghost" type="button" title="Nạp lại task từ file JSON">
+          <span class="btn__icon">⬆</span><span class="nav__label">Import</span>
+        </button>
+        <input id="import-file" type="file" accept="application/json" hidden />
+        <button id="btn-theme" class="btn btn--icon" type="button" title="Đổi sáng/tối">◐</button>
+        <button id="btn-nav-toggle" class="btn btn--icon" type="button" title="Thu gọn sidebar" aria-label="Thu gọn sidebar">«</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- ===== PROCESSES VIEW ===== -->
+      <section id="view-processes" class="view is-active">
+        <header class="view__head">
+          <div class="view__head-left">
+            <button class="list-toggle" data-list-toggle="processes" type="button" title="Thu gọn danh sách" aria-label="Thu gọn danh sách"></button>
+            <div>
+              <h1>Quy trình làm việc</h1>
+              <p class="muted">Toàn bộ quy trình của team — để không quên, không thiếu bước.</p>
+            </div>
+          </div>
+          <input id="proc-search" class="input search" type="search" placeholder="Tìm quy trình…" aria-label="Tìm quy trình" />
+        </header>
+
+        <div class="split">
+          <ul id="proc-list" class="proc-list" aria-label="Danh sách quy trình"></ul>
+          <article id="proc-detail" class="proc-detail card">
+            <p class="empty">Chọn một quy trình để xem chi tiết.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===== TASKS VIEW ===== -->
+      <section id="view-tasks" class="view">
+        <header class="view__head">
+          <div class="view__head-left">
+            <button class="list-toggle" data-list-toggle="tasks" type="button" title="Thu gọn danh sách" aria-label="Thu gọn danh sách"></button>
+            <div>
+              <h1>Task / Feature</h1>
+              <p class="muted">Theo dõi từng task: tiến độ, việc đã làm, tài liệu, note, mail.</p>
+            </div>
+          </div>
+          <div class="head-actions">
+            <input id="task-search" class="input search" type="search" placeholder="Tìm task…" aria-label="Tìm task" />
+            <button id="btn-new-task" class="btn btn--primary" type="button">+ Task mới</button>
+          </div>
+        </header>
+
+        <div id="fs-bar" class="fs-bar">
+          <span id="fs-status" class="fs-bar__status">Đang kiểm tra thư mục lưu…</span>
+          <span id="fs-actions" class="fs-bar__actions"></span>
+        </div>
+
+        <div class="split">
+          <ul id="task-list" class="task-list" aria-label="Danh sách task"></ul>
+          <article id="task-detail" class="task-detail card">
+            <p class="empty">Chọn một task, hoặc tạo task mới.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal host -->
+  <div id="modal-root" class="modal-root" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/apistore.js"></script>
+  <script src="assets/js/processes.js"></script>
+  <script src="assets/js/pipeline.js"></script>
+  <script src="assets/js/tasks.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

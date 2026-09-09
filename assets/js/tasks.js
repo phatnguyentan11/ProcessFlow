@@ -12,6 +12,8 @@
   var PRIORITIES = ["Low", "Medium", "High", "Critical"];
   var STATUSES = ["Open", "In Progress", "Blocked", "Done"];
   var TYPES = ["Feature", "Bug", "Hotfix", "Support"];
+  var SOURCES = ["Excel workboard plan", "ADO"];
+  var DEFAULT_TASK_ID = "Undefined";
   var STATUS_BADGE = { "Open": "", "In Progress": "badge--accent", "Blocked": "badge--warn", "Done": "badge--ok" };
   var PRIO_BADGE = { "Low": "", "Medium": "badge--accent", "High": "badge--warn", "Critical": "badge--danger" };
 
@@ -64,6 +66,7 @@
     if (!t.todos) t.todos = [];
     if (!t.golive) t.golive = [];
     if (!t.integrations) t.integrations = [];
+    Sheet.migrate(t);
     return Brs.migrate(t);
   }
 
@@ -81,11 +84,23 @@
     });
   }
 
+  // Vẽ lại nhưng GIỮ NGUYÊN vị trí cuộn — sửa inline không bị giật về đầu trang.
+  // (renderDetail luôn kết thúc bằng scrollTop = 0, đúng khi đổi task/tab, sai khi chỉ sửa 1 ô.)
+  function rerenderDetail() {
+    var detail = document.getElementById("task-detail");
+    var list = document.getElementById("task-list");
+    var detailY = detail ? detail.scrollTop : 0;
+    var listY = list ? list.scrollTop : 0;
+    renderList();
+    renderDetail();
+    if (detail) detail.scrollTop = detailY;
+    if (list) list.scrollTop = listY;
+  }
+
   function refreshAfterMutation() {
     var t = current();
     if (t) t.updatedAt = new Date().toISOString();
-    renderList();
-    renderDetail();
+    rerenderDetail();
     saveTask(t);
   }
 
@@ -178,7 +193,6 @@
           t.type ? el("span", { class: "badge", text: t.type }) : null,
           t.source ? el("span", { class: "badge", text: t.source }) : null,
           t.sheet ? el("span", { class: "badge", title: "Sheet trong workboard plan", text: "📄 " + t.sheet }) : null,
-          t.boardTask ? el("span", { class: "badge", title: "Task trong sheet", text: "▤ " + t.boardTask }) : null,
           featureLinkBadge(t),
           (t.brs || []).length ? null : el("span", { class: "badge badge--warn", text: "⚠ Chưa gắn BRS/DD" }),
           pendingChangeBadge(t),
@@ -229,19 +243,21 @@
     return bar;
   }
 
-  // Context truyền sang brs.js — dùng lại helper dựng UI của file này.
-  function brsCtx() {
+  // Context truyền sang brs.js / sheet.js — dùng lại helper của file này.
+  function panelCtx() {
     return {
       refresh: refreshAfterMutation, entryCard: entryCard,
       fileRow: fileRow, fileOpenBtn: fileOpenBtn, select: select,
+      today: todayStr, dayDiff: dayDiff, statuses: STATUSES,
+      rerender: rerenderDetail,
     };
   }
 
   function tabPanel(t) {
     switch (state.activeTab) {
       case "overview": return overviewPanel(t);
-      case "brs": return Brs.brsPanel(t, brsCtx());
-      case "notes": return Brs.notesPanel(t, brsCtx());
+      case "brs": return Brs.brsPanel(t, panelCtx());
+      case "notes": return Brs.notesPanel(t, panelCtx());
       case "todos": return todosPanel(t);
       case "documents": return documentsPanel(t);
       case "integrations": return integrationsPanel(t);
@@ -282,6 +298,8 @@
     var src = sourceSection(t);
     if (src) panel.appendChild(src);
     panel.appendChild(descSection(t));
+    var sheetSec = Sheet.section(t, panelCtx());
+    if (sheetSec) panel.appendChild(sheetSec);
 
     var created = el("dl", { class: "kv" }, [
       el("dt", { text: "Tạo lúc" }), el("dd", { text: UI.fmtDate(t.createdAt) || "—" }),
@@ -295,7 +313,6 @@
   function sourceSection(t) {
     var rows = [];
     if (t.sheet) rows.push(el("dt", { text: "Sheet" }), el("dd", { text: t.sheet }));
-    if (t.boardTask) rows.push(el("dt", { text: "Task (trong sheet)" }), el("dd", { text: t.boardTask }));
     if (t.source) rows.push(el("dt", { text: "Nguồn" }), el("dd", { text: t.source }));
     if (t.parentTaskId) {
       rows.push(el("dt", { text: "Feature cha" }), el("dd", {}, [featureLinkBadge(t)]));
@@ -794,20 +811,17 @@
       return el("div", { class: "field" }, [el("label", { text: labelText }), node]);
     }
     f.title = el("input", { class: "input", value: t.title || "", placeholder: "Tên task / feature" });
-    f.taskId = el("input", { class: "input", value: t.taskId || "", placeholder: "VD: PROJ-123" });
-    f.source = el("input", { class: "input", value: t.source || "", placeholder: "Workboard plan / Báo lỗi QA…" });
+    f.taskId = el("input", { class: "input", value: t.taskId || "", placeholder: "VD: PROJ-123 (bỏ trống = Undefined)" });
+    f.source = sourceSelect(t.source);
     f.type = select(TYPES, t.type || "Feature");
     f.priority = select(PRIORITIES, t.priority || "Medium");
     f.status = select(STATUSES, t.status || "Open");
     f.sheet = el("input", { class: "input", value: t.sheet || "", placeholder: "VD: Sheet T9-2026" });
-    f.boardTask = el("input", { class: "input", value: t.boardTask || "", placeholder: "Dòng / mã task trong sheet" });
     f.parentTaskId = featureSelect(t.parentTaskId, t.id);
     f.ac = el("textarea", { placeholder: "Mô tả / acceptance criteria" }); f.ac.value = t.ac || "";
 
-    // Feature lấy từ workboard plan (Sheet/Task); Bug bắt buộc link Feature cha.
-    var featureRow = el("div", { class: "field" }, [
-      el("div", { class: "grid2" }, [wrap("Sheet (workboard plan)", f.sheet), wrap("Task (trong sheet)", f.boardTask)]),
-    ]);
+    // Feature chỉ cần Sheet (task con liệt kê ở tab Tổng quan); Bug link Feature cha.
+    var featureRow = field("Sheet (workboard plan)", f.sheet);
     var bugRow = field("Feature cha (bắt buộc với Bug)", f.parentTaskId);
     function applyType() {
       featureRow.hidden = f.type.value !== "Feature";
@@ -862,7 +876,7 @@
         var now = new Date().toISOString();
         task = Object.assign({
           id: Store.uid(), stage: -1, todos: [], documents: [], integrations: [],
-          notes: [], mails: [], golive: [], brs: [], changes: [],
+          notes: [], mails: [], golive: [], brs: [], changes: [], sheetTasks: [],
           createdAt: now, updatedAt: now,
         }, readForm(f));
         state.tasks.push(task);
@@ -879,13 +893,20 @@
   function readForm(f) {
     var type = f.type.value;
     return {
-      title: f.title.value.trim(), taskId: f.taskId.value.trim(), source: f.source.value.trim(),
+      title: f.title.value.trim(), taskId: f.taskId.value.trim() || DEFAULT_TASK_ID,
+      source: f.source.value,
       type: type, priority: f.priority.value, status: f.status.value, ac: f.ac.value.trim(),
       // Chỉ giữ field của đúng loại task để không sót dữ liệu cũ khi đổi loại.
       sheet: type === "Feature" ? f.sheet.value.trim() : "",
-      boardTask: type === "Feature" ? f.boardTask.value.trim() : "",
       parentTaskId: type === "Bug" ? f.parentTaskId.value : "",
     };
+  }
+
+  // Select nguồn task; giữ giá trị cũ ngoài pool để không mất dữ liệu khi sửa task.
+  function sourceSelect(current) {
+    var opts = SOURCES.slice();
+    if (current && opts.indexOf(current) < 0) opts.push(current);
+    return select(opts, current || SOURCES[0]);
   }
 
   // Select các task Feature để Bug link tới (loại trừ chính task đang sửa).

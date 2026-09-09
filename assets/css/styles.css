@@ -478,6 +478,36 @@ code, .mono { font-family: var(--mono); font-size: .85em; background: var(--surf
 .desc-card__input { min-height: 130px; }
 .desc-card__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 
+/* ---------- task con trong sheet ---------- */
+.sheet-task {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); padding: 10px 12px; margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.sheet-task--late { border-color: var(--danger); }
+.sheet-task__top { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+.sheet-task__name { flex: 1; min-width: 140px; font-weight: 600; word-break: break-word; }
+.sheet-task__status { max-width: 150px; }
+.sheet-task__nameinput { flex: 1; min-width: 0; }
+.sheet-task__top .entry__del { flex: none; }
+.sheet-task__dates { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .85rem; }
+.sheet-task__date { max-width: 145px; flex: none; }
+.sheet-task__arrow { color: var(--muted); }
+.sheet-task__sched { color: var(--text-soft); }
+.sheet-sum { font-size: .78rem; font-weight: 600; color: var(--text-soft); margin-left: auto; }
+
+/* che do XEM: moi task gon 1 dong */
+.sheet-task-line {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  padding: 7px 2px; border-bottom: 1px dashed var(--border); font-size: .88rem;
+}
+.sheet-task-line:last-of-type { border-bottom: 0; }
+.sheet-task-line .sheet-task__name { flex: 1; min-width: 130px; font-weight: 600; }
+.sheet-task__range {
+  font-family: var(--mono); font-size: .74rem; color: var(--muted); white-space: nowrap;
+}
+.sheet-task__notev { flex-basis: 100%; color: var(--muted); font-size: .8rem; }
+
 /* ---------- BRS + nhật ký thay đổi ---------- */
 .brs-card {
   background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);

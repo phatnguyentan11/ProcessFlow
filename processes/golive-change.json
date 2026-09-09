@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Cập nhật change item — đính kèm hồ sơ & push approvals",
   "lastUpdated": "2026-07-24",
-  "order": 8,
+  "order": 9,
   "status": "active",
   "group": "Golive",
   "whenToApply": "Sau khi có Mail Checklist & Pentest — cập nhật hồ sơ change",

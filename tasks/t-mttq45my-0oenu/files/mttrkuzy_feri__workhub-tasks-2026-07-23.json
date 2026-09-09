@@ -1,0 +1,24 @@
+{
+  "app": "WorkHub",
+  "version": 1,
+  "exportedAt": "2026-07-23T07:25:54.547Z",
+  "tasks": [
+    {
+      "id": "t-mrx6ib96-ui8sr",
+      "stage": 0,
+      "activities": [],
+      "documents": [],
+      "notes": [],
+      "mails": [],
+      "createdAt": "2026-07-23T07:17:29.081Z",
+      "updatedAt": "2026-07-23T07:23:59.272Z",
+      "title": "Kiểm soát sau vay",
+      "taskId": "",
+      "source": "",
+      "type": "Feature",
+      "priority": "Medium",
+      "status": "Open",
+      "ac": "Kiểm soát sau vay"
+    }
+  ]
+}

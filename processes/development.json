@@ -1,10 +1,10 @@
 {
   "id": "development",
   "name": "Development (TDD)",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Phát triển theo phương pháp Test-Driven Development",
-  "lastUpdated": "2026-07-23",
-  "order": 3,
+  "lastUpdated": "2026-09-09",
+  "order": 5,
   "status": "active",
   "group": "Phát triển",
   "whenToApply": "Khi có plan approved",
@@ -77,6 +77,10 @@
   "notes": [
     "Không commit code chưa test",
     "Không merge nếu test fails",
-    "Viết test first - không viết sau"
+    "Viết test first - không viết sau",
+    "Code bám theo bản CUỐI CÙNG của BRS/DD; DD (từ Lead) ưu tiên cao hơn BRS (từ BA)",
+    "Yêu cầu mới phải được cập nhật vào BRS/DD TRƯỚC, dev làm sau — không code theo yêu cầu miệng",
+    "Ngoại lệ duy nhất: quyết định của Team/Tech Lead — được làm ngay nhưng phải ghi nhận lại và xin hợp thức hóa vào tài liệu sau",
+    "BRS/DD đổi giữa chừng: DỪNG code, tiếp nhận lại tài liệu theo quy trình Tiếp nhận tài liệu BRS/DD rồi mới làm tiếp"
   ]
 }

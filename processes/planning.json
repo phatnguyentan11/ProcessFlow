@@ -1,28 +1,27 @@
 {
   "id": "planning",
   "name": "Planning & Estimation",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Lên kế hoạch chi tiết và ước lượng effort trước khi development",
-  "lastUpdated": "2026-07-23",
-  "order": 2,
+  "lastUpdated": "2026-09-09",
+  "order": 3,
   "status": "active",
   "group": "Phát triển",
-  "whenToApply": "Sau khi analysis được PO approve",
+  "whenToApply": "Sau khi nhận task và đã có BRS/DD, trước khi bắt đầu development (** chú ý theo thông báo của Lead start)",
   "workflow": [
     {
       "step": 1,
-      "name": "Read Analysis",
-      "description": "Đọc tài liệu phân tích"
+      "name": "Read Analysis/ Read tài liệu DD nếu có",
+      "description": "Đọc tài liệu phân tích/confirm scope với BA, confirm solution với Lead"
     },
     {
       "step": 2,
       "name": "Technical Planning",
-      "description": "Lên kế hoạch kỹ thuật",
+      "description": "Lên kế hoạch kỹ thuật/ Tuân thủ theo thiết kế DD nếu có.",
       "items": [
-        "Tech stack selection",
+        "Chọn service chạy",
         "Database schema design",
-        "API design",
-        "Component structure"
+        "API design"
       ]
     },
     {
@@ -81,6 +80,8 @@
   "notes": [
     "Break down thành tasks nhỏ (max 1 day each)",
     "Include buffer cho unexpected issues",
-    "Document risks và mitigation"
+    "Document risks và mitigation",
+    "Estimate bám theo bản CUỐI CÙNG của BRS/DD — ghi rõ estimate theo tài liệu và version nào",
+    "Mỗi lần BRS/DD đổi (ảnh hưởng từ Trung bình trở lên) phải re-estimate — xem quy trình Tiếp nhận tài liệu BRS/DD"
   ]
 }

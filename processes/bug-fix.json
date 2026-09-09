@@ -1,18 +1,27 @@
 {
   "id": "bug-fix",
   "name": "Bug Fix (Normal)",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Sửa lỗi thường (không khẩn cấp)",
-  "lastUpdated": "2026-07-23",
-  "order": 10,
+  "lastUpdated": "2026-09-09",
+  "order": 11,
   "status": "active",
   "group": "Xử lý sự cố",
   "whenToApply": "Bug phát hiện trong dev/staging, không ảnh hưởng production",
+  "prerequisites": [
+    "Bug ưu tiên link về Feature tương ứng; không xác định được thì hỏi lại Lead",
+    "Xác định được BRS/DD liên quan (kế thừa từ Feature cha) trước khi phân tích"
+  ],
   "workflow": [
     {
       "step": 1,
       "name": "Bug Reported",
-      "description": "Bug được báo cáo"
+      "description": "Bug được báo cáo",
+      "items": [
+        "Ghi tiêu đề lỗi + bước tái hiện",
+        "Link về Feature cha",
+        "Xác định BRS/DD liên quan của Feature đó"
+      ]
     },
     {
       "step": 2,
@@ -20,6 +29,7 @@
       "description": "Phân loại bug",
       "items": [
         "Verify bug exists",
+        "Đối chiếu với BRS/DD bản cuối: lỗi code hay do yêu cầu đã thay đổi?",
         "Assign developer",
         "Set priority"
       ]
@@ -78,6 +88,8 @@
   "notes": [
     "Write test first - prevent regression",
     "Document root cause - learn from mistakes",
-    "Verify fix - trước khi close"
+    "Verify fix - trước khi close",
+    "Nếu đối chiếu BRS/DD thấy đây là yêu cầu thay đổi chứ không phải lỗi → tiếp nhận lại tài liệu theo quy trình Tiếp nhận tài liệu BRS/DD",
+    "Bug không xác định được Feature cha là dấu hiệu phân task sai — hỏi lại Lead"
   ]
 }

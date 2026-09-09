@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Mail checklist golive — gửi Team lead duyệt, CC cả team",
   "lastUpdated": "2026-07-24",
-  "order": 6,
+  "order": 7,
   "status": "active",
   "group": "Golive",
   "whenToApply": "Trước ngày golive — gửi checklist cho Team lead duyệt (CC cả team)",

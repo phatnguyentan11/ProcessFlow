@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Xác nhận ngày golive, Change ID, thu thập PR & thành phần tham gia",
   "lastUpdated": "2026-07-24",
-  "order": 5,
+  "order": 6,
   "status": "active",
   "group": "Golive",
   "whenToApply": "Bắt đầu chuẩn bị golive một tính năng",

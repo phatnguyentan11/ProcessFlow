@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Sửa lỗi khẩn cấp trên production",
   "lastUpdated": "2026-07-23",
-  "order": 11,
+  "order": 12,
   "status": "active",
   "group": "Xử lý sự cố",
   "whenToApply": "Bug trên production ảnh hưởng user - Critical",

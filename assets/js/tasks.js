@@ -17,10 +17,11 @@
 
   var TABS = [
     { id: "overview", label: "Tổng quan" },
+    { id: "brs", label: "BRS/DD", coll: "brs" },
+    { id: "notes", label: "Notes", count: function (t) { return Brs.stats(t).timeline; } },
     { id: "todos", label: "TODO", coll: "todos" },
     { id: "documents", label: "Tài liệu", coll: "documents" },
     { id: "integrations", label: "Tích hợp", coll: "integrations" },
-    { id: "notes", label: "Note / Chat", coll: "notes" },
     { id: "mails", label: "Mail", coll: "mails" },
     { id: "golive", label: "Ghi chú golive", coll: "golive" },
   ];
@@ -63,7 +64,13 @@
     if (!t.todos) t.todos = [];
     if (!t.golive) t.golive = [];
     if (!t.integrations) t.integrations = [];
-    return t;
+    return Brs.migrate(t);
+  }
+
+  // Task Feature mà bug đang link tới (null nếu không có / đã bị xóa).
+  function parentFeature(t) {
+    if (!t.parentTaskId) return null;
+    return state.tasks.filter(function (x) { return x.id === t.parentTaskId; })[0] || null;
   }
 
   // Ghi task đang thao tác ra thư mục (bất đồng bộ, không chặn UI).
@@ -122,6 +129,7 @@
         t.taskId ? el("span", { class: "task-item__id", text: t.taskId }) : null,
         el("span", { class: "badge " + (PRIO_BADGE[t.priority] || ""), text: t.priority || "Medium" }),
         t.type ? el("span", { class: "badge", text: t.type }) : null,
+        (t.brs || []).length ? null : el("span", { class: "badge badge--warn", title: "Task chưa gắn tài liệu BRS/DD", text: "⚠ BRS/DD" }),
       ]),
       el("div", { class: "progress", title: "Tiến độ " + pct + "%" }, [
         el("div", { class: "progress__bar", style: "width:" + pct + "%" }),
@@ -169,6 +177,11 @@
           el("span", { class: "badge " + (PRIO_BADGE[t.priority] || ""), text: t.priority || "Medium" }),
           t.type ? el("span", { class: "badge", text: t.type }) : null,
           t.source ? el("span", { class: "badge", text: t.source }) : null,
+          t.sheet ? el("span", { class: "badge", title: "Sheet trong workboard plan", text: "📄 " + t.sheet }) : null,
+          t.boardTask ? el("span", { class: "badge", title: "Task trong sheet", text: "▤ " + t.boardTask }) : null,
+          featureLinkBadge(t),
+          (t.brs || []).length ? null : el("span", { class: "badge badge--warn", text: "⚠ Chưa gắn BRS/DD" }),
+          pendingChangeBadge(t),
         ]),
       ]),
       el("div", { class: "task-detail__actions" }, [
@@ -179,12 +192,34 @@
     ]);
   }
 
+  // Cảnh báo thay đổi chưa vào BRS/DD và chưa có quyết định Lead.
+  function pendingChangeBadge(t) {
+    var n = Brs.stats(t).pending;
+    if (!n) return null;
+    return el("span", {
+      class: "badge badge--danger", title: "Cần BA cập nhật BRS/DD hoặc xin quyết định Lead trước khi làm",
+      text: "⚠ " + n + " thay đổi chưa vào BRS/DD",
+    });
+  }
+
+  // Badge "↗ Feature cha" cho task Bug — bấm để mở feature liên quan.
+  function featureLinkBadge(t) {
+    if (!t.parentTaskId) return null;
+    var p = parentFeature(t);
+    if (!p) return el("span", { class: "badge badge--warn", text: "⚠ Feature cha không còn" });
+    return el("button", {
+      class: "badge badge--accent link-badge", type: "button", title: "Mở Feature cha",
+      text: "↗ " + (p.taskId ? p.taskId + " · " : "") + (p.title || "(chưa có tên)"),
+      onclick: function () { selectTask(p.id); },
+    });
+  }
+
   function tabBar(t) {
     var bar = el("div", { class: "tabs" });
     TABS.forEach(function (tab) {
-      var count = tab.coll ? (t[tab.coll] || []).length : 0;
+      var count = tab.count ? tab.count(t) : (tab.coll ? (t[tab.coll] || []).length : null);
       var children = [document.createTextNode(tab.label)];
-      if (tab.coll) children.push(el("span", { class: "count", text: String(count) }));
+      if (count !== null) children.push(el("span", { class: "count", text: String(count) }));
       bar.appendChild(el("button", {
         class: "tab" + (state.activeTab === tab.id ? " is-active" : ""),
         type: "button",
@@ -194,13 +229,22 @@
     return bar;
   }
 
+  // Context truyền sang brs.js — dùng lại helper dựng UI của file này.
+  function brsCtx() {
+    return {
+      refresh: refreshAfterMutation, entryCard: entryCard,
+      fileRow: fileRow, fileOpenBtn: fileOpenBtn, select: select,
+    };
+  }
+
   function tabPanel(t) {
     switch (state.activeTab) {
       case "overview": return overviewPanel(t);
+      case "brs": return Brs.brsPanel(t, brsCtx());
+      case "notes": return Brs.notesPanel(t, brsCtx());
       case "todos": return todosPanel(t);
       case "documents": return documentsPanel(t);
       case "integrations": return integrationsPanel(t);
-      case "notes": return notesPanel(t);
       case "mails": return mailsPanel(t);
       case "golive": return collectionPanel(t, "golive");
       default: return el("div");
@@ -217,9 +261,15 @@
     var docMine = docs.filter(function (d) { return d.owner === "mine"; }).length;
     var integs = t.integrations || [];
     var overdue = integs.filter(isOverdue).length;
+    var bs = Brs.stats(t);
     var stat = el("div", { class: "detail-meta", style: "margin-bottom:16px" }, [
       el("span", { class: "badge badge--accent doc-count",
         html: "TODO: <strong>" + doneCount + "/" + todos.length + "</strong>" }),
+      el("span", { class: "badge " + (bs.docCount ? "" : "badge--warn"),
+        text: bs.docCount ? "DD: " + bs.ddCount + " · BRS: " + bs.brsCount : "⚠ Chưa gắn BRS/DD" }),
+      el("span", { class: "badge " + (bs.total ? "badge--warn" : ""),
+        text: "Thay đổi: BRS " + bs.viaBrs + " · DD " + bs.viaDd + " · ngoài tài liệu " + bs.adhoc }),
+      pendingChangeBadge(t),
       el("span", { class: "badge", text: "Tài liệu: " + docBa + " BA/Lead · " + docMine + " cá nhân" }),
       el("span", { class: "badge " + (overdue ? "badge--warn" : ""),
         text: "Tích hợp: " + integs.length + (overdue ? " · trễ " + overdue : "") }),
@@ -229,6 +279,8 @@
     ]);
     panel.appendChild(stat);
 
+    var src = sourceSection(t);
+    if (src) panel.appendChild(src);
     panel.appendChild(descSection(t));
 
     var created = el("dl", { class: "kv" }, [
@@ -239,25 +291,41 @@
     return panel;
   }
 
-  // Mục mô tả có sửa inline.
+  // Nguồn nhận task: Feature (workboard plan của Lead) hoặc Bug (link Feature cha).
+  function sourceSection(t) {
+    var rows = [];
+    if (t.sheet) rows.push(el("dt", { text: "Sheet" }), el("dd", { text: t.sheet }));
+    if (t.boardTask) rows.push(el("dt", { text: "Task (trong sheet)" }), el("dd", { text: t.boardTask }));
+    if (t.source) rows.push(el("dt", { text: "Nguồn" }), el("dd", { text: t.source }));
+    if (t.parentTaskId) {
+      rows.push(el("dt", { text: "Feature cha" }), el("dd", {}, [featureLinkBadge(t)]));
+    }
+    if (!rows.length) return null;
+    return el("div", { class: "section" }, [
+      el("h3", { text: "Nguồn task" }), el("dl", { class: "kv" }, rows),
+    ]);
+  }
+
+  // Mô tả / AC: tiêu đề + nút Sửa cùng hàng trong khối, thân khối rộng bên dưới.
   function descSection(t) {
     var acText = t.ac ? UI.escWithLinks(t.ac) : '<span class="muted">Chưa có mô tả / acceptance criteria.</span>';
-    var section = el("div", { class: "section" });
-    var editBtn = el("button", { class: "btn btn--ghost btn--sm", type: "button", text: "✎ Sửa", onclick: startEdit });
-    var head = el("div", { class: "section__head" }, [
-      el("h3", { text: "Mô tả / Acceptance Criteria" }), editBtn,
+    var editBtn = el("button", { class: "btn desc-card__edit", type: "button", text: "✎ Sửa", onclick: startEdit });
+    var body = el("div", { class: "desc-card__body", html: acText });
+    var section = el("div", { class: "section desc-card" }, [
+      el("div", { class: "desc-card__head" }, [
+        el("h3", { text: "Mô tả / Acceptance Criteria" }),
+        editBtn,
+      ]),
+      body,
     ]);
-    var display = el("div", { class: "subcard", html: acText, style: "white-space:pre-wrap" });
-    section.appendChild(head);
-    section.appendChild(display);
 
     function startEdit() {
       editBtn.style.display = "none";
-      var ta = el("textarea", { placeholder: "Mô tả / acceptance criteria" });
+      var ta = el("textarea", { class: "desc-card__input", placeholder: "Mô tả / acceptance criteria" });
       ta.value = t.ac || "";
-      var editor = el("div", {}, [
+      var editor = el("div", { class: "desc-card__body" }, [
         ta,
-        el("div", { style: "display:flex;gap:8px;justify-content:flex-end;margin-top:8px" }, [
+        el("div", { class: "desc-card__actions" }, [
           el("button", { class: "btn btn--sm", type: "button", text: "Hủy", onclick: function () { renderDetail(); } }),
           el("button", {
             class: "btn btn--primary btn--sm", type: "button", text: "Lưu",
@@ -269,7 +337,7 @@
           }),
         ]),
       ]);
-      section.replaceChild(editor, display);
+      section.replaceChild(editor, body);
       ta.focus();
     }
     return section;
@@ -309,91 +377,6 @@
       panel.appendChild(entryCard(t, coll, e, el("div", { class: "entry__body", html: UI.escWithLinks(e.text) })));
     });
     return panel;
-  }
-
-  /* ---------- Note / Chat (hỗ trợ dán ảnh) ---------- */
-  function notesPanel(t) {
-    var panel = el("div", { class: "tab-panel is-active" });
-    var pending = []; // ảnh đã dán, chưa lưu: { file, url }
-    var ta = el("textarea", { placeholder: "Nội dung đã chốt / confirm trong nhóm chat…  (Ctrl+V để dán ảnh)" });
-    var preview = el("div", { class: "img-preview" });
-
-    function renderPreview() {
-      preview.innerHTML = "";
-      pending.forEach(function (p, idx) {
-        preview.appendChild(el("div", { class: "img-preview__item" }, [
-          el("img", { src: p.url, alt: "" }),
-          el("button", {
-            class: "img-preview__del", type: "button", text: "✕", title: "Gỡ ảnh",
-            onclick: function () { URL.revokeObjectURL(p.url); pending.splice(idx, 1); renderPreview(); },
-          }),
-        ]));
-      });
-    }
-
-    ta.addEventListener("paste", function (ev) {
-      var items = (ev.clipboardData && ev.clipboardData.items) || [];
-      var added = false;
-      for (var i = 0; i < items.length; i++) {
-        var it = items[i];
-        if (it.kind === "file" && it.type.indexOf("image/") === 0) {
-          var blob = it.getAsFile();
-          if (blob) {
-            var ext = (blob.type.split("/")[1] || "png").replace("jpeg", "jpg");
-            var file = new File([blob], "paste-" + Date.now() + "-" + i + "." + ext, { type: blob.type });
-            pending.push({ file: file, url: URL.createObjectURL(file) });
-            added = true;
-          }
-        }
-      }
-      if (added) { ev.preventDefault(); renderPreview(); }
-    });
-
-    panel.appendChild(el("div", { class: "add-row" }, [
-      ta, preview,
-      el("div", { class: "right" }, [
-        el("button", {
-          class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm",
-          onclick: function () {
-            var v = ta.value.trim();
-            if (!v && !pending.length) return;
-            var entry = { id: Store.uid(), time: new Date().toISOString(), text: v, images: [] };
-            Promise.all(pending.map(function (p) { return ApiStore.saveFile(t.id, p.file); }))
-              .then(function (refs) {
-                entry.images = refs;
-                (t.notes = t.notes || []).unshift(entry);
-                pending.forEach(function (p) { URL.revokeObjectURL(p.url); });
-                pending = [];
-                refreshAfterMutation();
-              })
-              .catch(function (e) { UI.toast("Lưu ảnh lỗi: " + e.message); });
-          },
-        }),
-      ]),
-    ]));
-
-    var items = t.notes || [];
-    if (!items.length) { panel.appendChild(el("p", { class: "muted", text: "Chưa có mục nào." })); return panel; }
-    items.forEach(function (n) { panel.appendChild(noteCard(t, n)); });
-    return panel;
-  }
-
-  function noteCard(t, note) {
-    var body = el("div", { class: "entry__body" });
-    if (note.text) body.appendChild(el("div", { html: UI.escWithLinks(note.text) }));
-    var imgs = note.images || [];
-    if (imgs.length) {
-      var strip = el("div", { class: "note-imgs" });
-      imgs.forEach(function (im) {
-        strip.appendChild(el("img", {
-          class: "note-img", src: ApiStore.fileUrl(t.id, im.storedAs), alt: im.name || "",
-          title: "Bấm để mở ảnh đầy đủ",
-          onclick: function () { ApiStore.openFile(t.id, im.storedAs); },
-        }));
-      });
-      body.appendChild(strip);
-    }
-    return entryCard(t, "notes", note, body);
   }
 
   /* ---------- TODO (2 nhóm: khi nhận task / phát sinh) ---------- */
@@ -812,11 +795,26 @@
     }
     f.title = el("input", { class: "input", value: t.title || "", placeholder: "Tên task / feature" });
     f.taskId = el("input", { class: "input", value: t.taskId || "", placeholder: "VD: PROJ-123" });
-    f.source = el("input", { class: "input", value: t.source || "", placeholder: "Jira / GitHub / Trello…" });
+    f.source = el("input", { class: "input", value: t.source || "", placeholder: "Workboard plan / Báo lỗi QA…" });
     f.type = select(TYPES, t.type || "Feature");
     f.priority = select(PRIORITIES, t.priority || "Medium");
     f.status = select(STATUSES, t.status || "Open");
+    f.sheet = el("input", { class: "input", value: t.sheet || "", placeholder: "VD: Sheet T9-2026" });
+    f.boardTask = el("input", { class: "input", value: t.boardTask || "", placeholder: "Dòng / mã task trong sheet" });
+    f.parentTaskId = featureSelect(t.parentTaskId, t.id);
     f.ac = el("textarea", { placeholder: "Mô tả / acceptance criteria" }); f.ac.value = t.ac || "";
+
+    // Feature lấy từ workboard plan (Sheet/Task); Bug bắt buộc link Feature cha.
+    var featureRow = el("div", { class: "field" }, [
+      el("div", { class: "grid2" }, [wrap("Sheet (workboard plan)", f.sheet), wrap("Task (trong sheet)", f.boardTask)]),
+    ]);
+    var bugRow = field("Feature cha (bắt buộc với Bug)", f.parentTaskId);
+    function applyType() {
+      featureRow.hidden = f.type.value !== "Feature";
+      bugRow.hidden = f.type.value !== "Bug";
+    }
+    f.type.addEventListener("change", applyType);
+    applyType();
 
     var modal = el("div", { class: "modal" }, [
       el("h2", { text: existing ? "Sửa task" : "Task mới" }),
@@ -830,6 +828,8 @@
             wrap("Loại", f.type), wrap("Ưu tiên", f.priority), wrap("Trạng thái", f.status),
           ]),
         ]),
+        featureRow,
+        bugRow,
         field("Mô tả / AC", f.ac),
       ]),
       el("div", { class: "modal__foot" }, [
@@ -850,6 +850,9 @@
     function save() {
       var title = f.title.value.trim();
       if (!title) { f.title.focus(); UI.toast("Cần nhập tên task."); return; }
+      if (f.type.value === "Bug" && !f.parentTaskId.value) {
+        UI.toast("Lưu ý: Bug chưa link Feature cha.");
+      }
       var task;
       if (existing) {
         assign(existing, readForm(f));
@@ -859,7 +862,7 @@
         var now = new Date().toISOString();
         task = Object.assign({
           id: Store.uid(), stage: -1, todos: [], documents: [], integrations: [],
-          notes: [], mails: [], golive: [],
+          notes: [], mails: [], golive: [], brs: [], changes: [],
           createdAt: now, updatedAt: now,
         }, readForm(f));
         state.tasks.push(task);
@@ -874,10 +877,28 @@
   }
 
   function readForm(f) {
+    var type = f.type.value;
     return {
       title: f.title.value.trim(), taskId: f.taskId.value.trim(), source: f.source.value.trim(),
-      type: f.type.value, priority: f.priority.value, status: f.status.value, ac: f.ac.value.trim(),
+      type: type, priority: f.priority.value, status: f.status.value, ac: f.ac.value.trim(),
+      // Chỉ giữ field của đúng loại task để không sót dữ liệu cũ khi đổi loại.
+      sheet: type === "Feature" ? f.sheet.value.trim() : "",
+      boardTask: type === "Feature" ? f.boardTask.value.trim() : "",
+      parentTaskId: type === "Bug" ? f.parentTaskId.value : "",
     };
+  }
+
+  // Select các task Feature để Bug link tới (loại trừ chính task đang sửa).
+  function featureSelect(currentId, selfId) {
+    var options = [el("option", { value: "", text: "— chưa gắn —" })];
+    state.tasks.forEach(function (x) {
+      if (x.type !== "Feature" || x.id === selfId) return;
+      options.push(el("option", {
+        value: x.id, text: (x.taskId ? x.taskId + " · " : "") + (x.title || "(chưa có tên)"),
+        selected: x.id === currentId ? "selected" : false,
+      }));
+    });
+    return el("select", {}, options);
   }
   function assign(target, patch) { Object.keys(patch).forEach(function (k) { target[k] = patch[k]; }); }
   function select(opts, val) {

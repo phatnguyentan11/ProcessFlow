@@ -1,76 +1,125 @@
 {
   "id": "task-reception",
   "name": "Nhận Task",
-  "version": "1.0.0",
-  "description": "Tiếp nhận task từ PO/TL và ghi nhận vào hệ thống",
-  "lastUpdated": "2026-07-23",
+  "version": "2.1.0",
+  "description": "Tiếp nhận task theo 2 nguồn (Feature / Bug), ghi nhận định danh và gắn tài liệu BRS/DD",
+  "lastUpdated": "2026-09-09",
   "order": 1,
   "status": "active",
   "group": "Phát triển",
-  "source": ["Jira", "GitHub Issues", "Trello", "Notion"],
+  "trackingSystem": "Azure DevOps (work item) hoặc Plan phân task nằm ở Excel Workboard plan của Lead",
+  "whenToApply": "Mỗi khi nhận một task mới, trước khi làm bất kỳ việc gì khác",
+  "source": [
+    {
+      "name": "Feature — từ Workboard plan của team",
+      "description": "Task phát triển tính năng. Phân việc qua excel workboard plan. Dev tự break task nhỏ.",
+      "input": "Excel Workboard plan của team + BRS từ BA",
+      "sheet": "Tên sheet trong workboard plan (bắt buộc)",
+      "task": "Dòng / mã task trong sheet (bắt buộc)",
+      "title": "Tiêu đề task (bắt buộc)"
+    },
+    {
+      "name": "Bug — link theo Feature",
+      "description": "Lỗi của feature đã hoặc đang phát triển. Bug nên link về Feature tương ứng để truy được lỗi thuộc tính năng nào.",
+      "input": "Được QC tạo trong ADO (Azure DevOps)",
+      "feature": "Cần ưu tiên chọn Feature cha trong WorkHub (bug kế thừa BRS của Feature đó)",
+      "title": "Tiêu đề lỗi (bắt buộc)"
+    }
+  ],
+  "prerequisites": [
+    "Mỗi task phải được gắn ít nhất 1 tài liệu BRS/DD trước khi bắt đầu planning. (Trường hợp đặc biệt phải là yêu cầu từ Lead)",
+    "Tất cả version BRS/DD phải lưu lại file, không ghi đè bản cũ — bản làm theo luôn là bản CUỐI CÙNG",
+    "Bug ưu tiên link về Feature cha; nếu không xác định được Feature thì hỏi lại BA/Lead trước khi nhận",
+    "Task Feature bắt buộc có đủ Sheet + Task + Title khớp với workboard plan của Lead"
+  ],
   "workflow": [
     {
       "step": 1,
-      "name": "Task Received",
-      "description": "Tiếp nhận task từ PO/TL",
-      "input": {
-        "source": "PO/TL",
-        "format": "Jira ticket/GitHub issue"
-      }
+      "name": "Xác định loại task",
+      "description": "Phân loại ngay khi nhận: Feature hay Bug — vì 2 loại ghi nhận thông tin khác nhau",
+      "actions": [
+        "Feature: đến từ workboard plan của Lead",
+        "Bug: đến từ báo lỗi, phải xác định được Feature liên quan"
+      ]
     },
     {
       "step": 2,
-      "name": "Check Task Info",
-      "description": "Kiểm tra thông tin task",
-      "checklist": [
-        "Task ID/Number",
-        "Title/Description",
-        "Acceptance Criteria",
-        "Priority/SLA"
+      "name": "Ghi nhận định danh task",
+      "description": "Ghi đủ thông tin để sau này truy ngược được về nguồn",
+      "actions": [
+        "Feature: ghi Sheet → Task → Title đúng như trong workboard plan",
+        "Bug: chọn Feature cha, ghi tiêu đề lỗi + bước tái hiện",
+        "Ghi Task ID của Azure DevOps (nếu có)",
+        "Xác định Priority / SLA"
       ]
     },
     {
       "step": 3,
-      "name": "Sanitize & Clarify",
-      "description": "Làm sạch và làm rõ yêu cầu",
+      "name": "Gắn tài liệu BRS/DD",
+      "description": "Mỗi task gắn 1 hoặc nhiều tài liệu. Chi tiết cách nhận, kiểm tra và lưu: xem quy trình Tiếp nhận tài liệu BRS/DD.",
       "actions": [
-        "Hiểu rõ requirements",
-        "Hỏi lại nếu unclear",
-        "Confirm scope với PO"
+        "Xin đủ BRS (từ BA) và DD (từ Lead) liên quan tới task",
+        "Đính kèm file của từng version vào task, không chỉ để link",
+        "Ghi loại (BRS hay DD) + số hiệu + phiên bản (VD: BRS-018 v1.0, DD-05 v1.0)",
+        "Bug: kế thừa tài liệu của Feature cha, bổ sung tài liệu riêng nếu có"
+      ],
+      "checklist": [
+        "Đã gắn ≥ 1 tài liệu BRS/DD",
+        "Đã đính kèm file cho từng version",
+        "Đã ghi phiên bản và người bàn giao",
+        "Đã xác định bản nào đang áp dụng (bản cuối cùng)"
       ]
     },
     {
       "step": 4,
-      "name": "Record in System",
-      "description": "Ghi vào hệ thống",
+      "name": "Làm rõ & confirm với BA",
+      "description": "Làm sạch yêu cầu trước khi ước lượng",
       "actions": [
-        "Jira: Create/Assign ticket",
-        "Notion/Document: Log task"
+        "Đọc kỹ BRS + acceptance criteria",
+        "Hỏi lại BA các điểm chưa rõ hoặc mâu thuẫn",
+        "Confirm scope: cái gì làm, cái gì KHÔNG làm",
+        "Ghi lại nội dung đã confirm (mail / chat) vào task"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Ghi vào hệ thống",
+      "description": "Tạo task trong WorkHub và cập nhật trạng thái",
+      "actions": [
+        "WorkHub: tạo task, chọn đúng loại, nhập Sheet/Task hoặc link Feature",
+        "WorkHub: gắn tài liệu + version ở tab BRS/DD",
+        "Azure DevOps: cập nhật trạng thái work item (nếu có)",
+        "Báo Lead nếu là task high-priority hoặc thiếu BRS"
       ]
     }
   ],
   "outputs": [
     {
-      "name": "Feature folder",
-      "path": "docs/features/[feature-name]/",
-      "description": "Folder mới cho feature"
+      "name": "Task trong WorkHub",
+      "path": "tasks/[task-id]/task.json",
+      "description": "Task đã có định danh (Sheet/Task hoặc Feature cha) và tài liệu BRS/DD bản cuối (có lưu tất cả version)"
     },
     {
-      "name": "Task info",
-      "path": "docs/features/[feature-name]/00-info.md",
-      "description": "Thông tin task (ID, title, AC)"
+      "name": "File tài liệu BRS/DD",
+      "path": "tasks/[task-id]/files/",
+      "description": "File của toàn bộ version đã nhận — bản cuối là bản đang áp dụng, bản cũ giữ lại để đối chiếu"
     }
   ],
   "checklist": [
-    "Đọc kỹ acceptance criteria",
-    "Xác nhận priority với PO",
-    "Ghi lại task ID vào personal log",
-    "Update task status trong tracking",
-    "Inform team nếu là high-priority"
+    "Đã xác định đúng loại task (Feature / Bug)",
+    "Feature: đủ Sheet + Task + Title",
+    "Bug: đã link Feature cha",
+    "Đã gắn ≥ 1 tài liệu BRS/DD và đính kèm file bản cuối (và tất cả bản trước đó)",
+    "Đã đọc kỹ acceptance criteria trong BRS/DD",
+    "Đã confirm scope với BA",
+    "Đã cập nhật trạng thái trên Azure DevOps"
   ],
   "notes": [
-    "Không bắt đầu dev khi chưa rõ requirements",
-    "Hỏi lại PO nếu AC không rõ hoặc mâu thuẫn",
+    "Thứ tự ưu tiên: Quyết định Team/Tech Lead > DD (từ Lead) > BRS (từ BA) > các bản cũ",
+    "Bản làm theo luôn là bản CUỐI CÙNG; bản cũ chỉ để đối chiếu",
+    "Không bắt đầu dev khi chưa rõ requirements hoặc chưa có BRS nếu không có chỉ thị trực tiếp từ Lead",
+    "Không ghi đè file BRS/DD cũ — mọi bản mới là một version mới (xem quy trình Tiếp nhận tài liệu BRS/DD)",
+    "Bug không có Feature cha là dấu hiệu task bị phân sai — hỏi lại Lead",
     "Confirm scope trước khi estimation"
   ]
 }

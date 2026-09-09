@@ -1,13 +1,81 @@
 {
   "id": "golive-3rd-party",
   "name": "Tích hợp 3rd-Party",
-  "version": "1.0.0",
-  "description": "Checklist NOTED khi phát triển tính năng có tích hợp API bên thứ 3",
-  "lastUpdated": "2026-07-24",
+  "version": "2.0.0",
+  "description": "Tiếp nhận thông tin tích hợp, call thông luồng trước khi code, và checklist NOTED khi golive API bên thứ 3",
+  "lastUpdated": "2026-09-09",
   "order": 4,
   "status": "active",
   "group": "Phát triển",
-  "whenToApply": "Khi phát triển tính năng có tích hợp API bên thứ 3 / vendor",
+  "whenToApply": "Ngay khi biết task có tích hợp API bên thứ 3 — phần workflow làm TRƯỚC khi bắt đầu code; phần checklist NOTED dùng lại ở giai đoạn go-live",
+  "input": [
+    "CURL mẫu / Postman collection của API 3rd-party",
+    "Endpoint + môi trường tương ứng (dev / test / prod)",
+    "API key, secret key — chỉ nhận thông tin về NƠI LƯU, không nhận giá trị qua chat/mail",
+    "Tài liệu API: input, output, mã lỗi, giới hạn rate limit",
+    "Đầu mối liên hệ phía 3rd-party / vendor",
+    "Nguồn cung cấp: QC / BA"
+  ],
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Nhận thông tin tích hợp từ QC/BA",
+      "description": "Thu đủ thông tin làm việc với 3rd trước khi động vào code",
+      "actions": [
+        "Xin CURL mẫu hoặc Postman collection",
+        "Xác định endpoint của từng môi trường (dev / test / prod)",
+        "Xác nhận API key / secret key đã được cấp và đang nằm ở đâu (KeyVault / ENV)",
+        "Xin tài liệu API: input, output, danh sách mã lỗi",
+        "Ghi lại đầu mối liên hệ phía 3rd-party"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Làm rõ trước khi làm",
+      "description": "Clear hết các điểm mơ hồ — không vừa code vừa đoán",
+      "actions": [
+        "Thiếu thông tin gì hỏi lại QC/BA ngay, không tự suy diễn",
+        "Xác nhận đang dùng đúng môi trường và đúng bộ key của môi trường đó",
+        "Xác nhận key còn hiệu lực, chưa hết hạn",
+        "Làm rõ rate limit, timeout, cơ chế retry",
+        "Làm rõ luồng xử lý lỗi: 3rd trả lỗi thì hệ thống mình xử lý ra sao"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Call thông luồng",
+      "description": "Bắt buộc call thử thành công trước khi bắt tay làm — chưa thông luồng thì chưa code",
+      "actions": [
+        "Tự call thử bằng CURL / Postman đến khi nhận được response THÀNH CÔNG",
+        "Call thử trên đúng môi trường sẽ phát triển",
+        "Lưu lại response mẫu để đối chiếu khi code",
+        "Call không thông: xác định do key, do permission, do network hay do 3rd chưa expose",
+        "CHƯA thông luồng thì CHƯA bắt đầu code"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Ghi nhận vào WorkHub",
+      "description": "Để theo dõi được tiến độ bàn giao của bên thứ 3",
+      "actions": [
+        "Tab Tích hợp: thêm API / stored procedure, ghi bên cung cấp và trạng thái",
+        "Ghi ngày hẹn bàn giao để theo dõi trễ hạn",
+        "Đính kèm response mẫu và tài liệu API (đã che key)",
+        "Ghi chú kết quả call thử: thông luồng ngày nào, môi trường nào"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Vướng thì báo sớm",
+      "description": "Không ngồi chờ im lặng — tích hợp 3rd là rủi ro trễ lịch lớn nhất",
+      "actions": [
+        "3rd chưa expose API: báo Lead + BA ngay",
+        "Chưa được cấp key hoặc chưa grant permission: báo và mở request sớm",
+        "Call mãi không thông: escalate, đừng để sát ngày golive mới báo",
+        "Ghi lại mọi lần trao đổi với 3rd vào task"
+      ]
+    }
+  ],
   "checklist": [
     {
       "name": "NOTED – Đối với API mới tích hợp 3rd Party",
@@ -69,5 +137,12 @@
         }
       ]
     }
+  ],
+  "notes": [
+    "KHÔNG paste API key / secret key vào WorkHub, task note, chat hay mail",
+    "Key chỉ nằm ở KeyVault / biến môi trường — trong task chỉ ghi TÊN BIẾN và NƠI LƯU, không ghi giá trị",
+    "CURL mẫu lưu vào task phải che phần key (thay bằng dấu *** hoặc tên biến)",
+    "Call thông luồng trước khi code — code trước rồi mới phát hiện API không gọi được là mất công làm lại",
+    "Tích hợp 3rd-party là rủi ro trễ lịch lớn nhất: vướng gì báo Lead sớm, không gánh im lặng"
   ]
 }

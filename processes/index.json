@@ -2,15 +2,16 @@
   "generatedNote": "Manifest liệt kê các file quy trình để web tĩnh có thể fetch (trình duyệt không list được thư mục). Thêm quy trình mới: tạo file .json rồi thêm 1 dòng vào mảng bên dưới.",
   "processes": [
     { "file": "task-reception.json", "id": "task-reception", "name": "Nhận Task", "order": 1 },
-    { "file": "planning.json", "id": "planning", "name": "Planning & Estimation", "order": 2 },
-    { "file": "development.json", "id": "development", "name": "Development (TDD)", "order": 3 },
+    { "file": "brs-dd-reception.json", "id": "brs-dd-reception", "name": "Tiếp nhận tài liệu BRS/DD", "order": 2 },
+    { "file": "planning.json", "id": "planning", "name": "Planning & Estimation", "order": 3 },
     { "file": "golive-3rd-party.json", "id": "golive-3rd-party", "name": "Tích hợp 3rd-Party", "order": 4 },
-    { "file": "golive-init.json", "id": "golive-init", "name": "Giai đoạn 1: Khởi tạo & Thu thập thông tin", "order": 5 },
-    { "file": "golive-prep.json", "id": "golive-prep", "name": "Giai đoạn 2: Mail Checklist Golive", "order": 6 },
-    { "file": "golive-pentest.json", "id": "golive-pentest", "name": "Giai đoạn 3: Mail Pentest Golive", "order": 7 },
-    { "file": "golive-change.json", "id": "golive-change", "name": "Giai đoạn 4: Cập nhật change item", "order": 8 },
-    { "file": "golive-exec.json", "id": "golive-exec", "name": "Giai đoạn 5: Thực thi Go-live", "order": 9 },
-    { "file": "bug-fix.json", "id": "bug-fix", "name": "Bug Fix (Normal)", "order": 10 },
-    { "file": "hotfix.json", "id": "hotfix", "name": "Hotfix", "order": 11 }
+    { "file": "development.json", "id": "development", "name": "Development (TDD)", "order": 5 },
+    { "file": "golive-init.json", "id": "golive-init", "name": "Giai đoạn 1: Khởi tạo & Thu thập thông tin", "order": 6 },
+    { "file": "golive-prep.json", "id": "golive-prep", "name": "Giai đoạn 2: Mail Checklist Golive", "order": 7 },
+    { "file": "golive-pentest.json", "id": "golive-pentest", "name": "Giai đoạn 3: Mail Pentest Golive", "order": 8 },
+    { "file": "golive-change.json", "id": "golive-change", "name": "Giai đoạn 4: Cập nhật change item", "order": 9 },
+    { "file": "golive-exec.json", "id": "golive-exec", "name": "Giai đoạn 5: Thực thi Go-live", "order": 10 },
+    { "file": "bug-fix.json", "id": "bug-fix", "name": "Bug Fix (Normal)", "order": 11 },
+    { "file": "hotfix.json", "id": "hotfix", "name": "Hotfix", "order": 12 }
   ]
 }

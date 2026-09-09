@@ -454,6 +454,56 @@ code, .mono { font-family: var(--mono); font-size: .85em; background: var(--surf
 .integ-note__text { color: var(--text-soft); flex: 1; word-break: break-word; }
 .add-row--note { margin-top: 4px; }
 
+/* ---------- khối Mô tả / AC (tab Tổng quan) ---------- */
+.desc-card {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.desc-card__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 14px; border-bottom: 1px solid var(--border);
+}
+.desc-card__head h3 {
+  margin: 0; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+}
+.desc-card__edit {
+  flex: none; padding: 3px 10px; font-size: .74rem;
+  background: transparent; border-color: transparent; color: var(--accent-text);
+}
+.desc-card__edit:hover { background: var(--accent-soft); transform: none; }
+.desc-card__body {
+  padding: 14px; min-height: 160px;
+  white-space: pre-wrap; word-break: break-word; color: var(--text-soft);
+}
+.desc-card__input { min-height: 130px; }
+.desc-card__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+/* ---------- BRS + nhật ký thay đổi ---------- */
+.brs-card {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 12px;
+}
+.brs-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.brs-card__title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; }
+.brs-vers {
+  border-top: 1px dashed var(--border); margin-top: 10px; padding-top: 11px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.brs-card--dd { border-left: 3px solid var(--accent); }
+.brs-ver { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; }
+.brs-ver--current .integ-ho__ver { background: var(--accent); color: #fff; }
+.brs-ver__top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brs-ver__top .file-open { margin-top: 0; }
+.brs-ver__by { font-size: .78rem; color: var(--muted); }
+.brs-ver__note { color: var(--text-soft); word-break: break-word; white-space: pre-wrap; }
+.brs-card__note {
+  margin-top: 6px; font-size: .85rem; color: var(--text-soft);
+  word-break: break-word; white-space: pre-wrap;
+}
+.chg-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.link-badge { cursor: pointer; border: none; font: inherit; }
+.link-badge:hover { filter: brightness(1.12); }
+
 /* ---------- pasted images (Note/Chat) ---------- */
 .img-preview { display: flex; flex-wrap: wrap; gap: 8px; }
 .img-preview:empty { display: none; }

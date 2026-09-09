@@ -1,0 +1,228 @@
+{
+  "id": "brs-dd-reception",
+  "name": "Tiếp nhận tài liệu BRS/DD",
+  "version": "2.0.0",
+  "description": "Nhận, kiểm tra và lưu tài liệu DD (từ Lead) và BRS (từ BA) — cả lần đầu lẫn mỗi lần tài liệu thay đổi",
+  "lastUpdated": "2026-09-09",
+  "order": 2,
+  "status": "active",
+  "group": "Phát triển",
+  "whenToApply": "Ngay sau khi nhận task, VÀ mỗi lần tài liệu thay đổi. Tài liệu thay đổi = tiếp nhận lại theo đúng quy trình này.",
+  "documentPriority": [
+    {
+      "name": "1. Quyết định trực tiếp của Team / Tech Lead",
+      "description": "Ưu tiên CAO NHẤT — được phép khác BRS/DD. Bắt buộc ghi nhận lại ai quyết định, khi nào."
+    },
+    {
+      "name": "2. DD (Detailed Design) — nếu có",
+      "description": "Do team DEV phát hành."
+    },
+    {
+      "name": "3. BRS — bản cuối cùng",
+      "description": "Do BA phát hành. Nhiều version, thay đổi thường xuyên. Là căn cứ nghiệp vụ."
+    },
+    {
+      "name": "4. Các bản BRS/DD cũ",
+      "description": "CHỈ dùng để đối chiếu lịch sử. Không bao giờ code theo bản cũ."
+    },
+    {
+      "name": "(Critical): tài liệu đổi trước, dev làm sau",
+      "description": "Mọi yêu cầu mới đều phải được cập nhật vào BRS/DD TRƯỚC, dev làm theo bản mới. Không code theo yêu cầu miệng khi tài liệu chưa đổi."
+    },
+    {
+      "name": "Ngoại lệ duy nhất: quyết định của Team / Tech Lead",
+      "description": "Chỉ Lead mới được cho phép làm khác BRS/DD. Phải ghi rõ ai quyết định, khi nào, và yêu cầu hợp thức hóa vào tài liệu sau."
+    }
+  ],
+  "source": [
+    {
+      "name": "DD (Detailed Design) — từ Team / Tech Lead",
+      "description": "Thiết kế chi tiết do Lead phát hành. Ít version, hiếm khi thay đổi, ưu tiên cao hơn BRS. Mỗi lần DD đổi đều là việc lớn.",
+      "input": "Lead bàn giao",
+      "checklist": [
+        "Ghi tên tài liệu + phiên bản",
+        "Ghi Lead nào bàn giao + ngày nhận",
+        "Đính kèm file (không chỉ để link)",
+        "Đối chiếu với BRS hiện có xem có mâu thuẫn không"
+      ]
+    },
+    {
+      "name": "BRS — từ BA",
+      "description": "Yêu cầu nghiệp vụ do BA phát hành. Nhiều version, thay đổi thường xuyên trong lúc làm task.",
+      "input": "BA bàn giao",
+      "checklist": [
+        "Ghi tên tài liệu + phiên bản",
+        "Ghi BA nào bàn giao + ngày nhận",
+        "Đính kèm file (không chỉ để link)",
+        "Xin đủ các BRS liên quan, không nhận thiếu"
+      ]
+    }
+  ],
+  "workflow": [
+    {
+      "step": 1,
+      "name": "Xác định cần tài liệu gì",
+      "description": "Biết trước phải có gì thì mới phát hiện được đang thiếu gì",
+      "actions": [
+        "Task này cần DD không? Cần bao nhiêu BRS?",
+        "Bug: dùng lại DD/BRS của Feature cha",
+        "Liệt kê ra trước khi đi xin tài liệu"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Nhận và kiểm tra tài liệu",
+      "description": "Áp dụng cho cả lần đầu lẫn mỗi bản mới. Kiểm tra ngay lúc nhận, không để đến lúc code mới phát hiện.",
+      "actions": [
+        "Xác định đúng loại: DD (Lead) hay BRS (BA)",
+        "Xác nhận là bản chính thức, không phải bản nháp trao đổi",
+        "Ghi tên tài liệu + phiên bản",
+        "Ghi người bàn giao và ngày nhận",
+        "Bản mới: hỏi rõ lý do đổi và đổi những gì so với bản trước"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Lưu vào task — giữ TẤT CẢ version",
+      "description": "Mọi bản đều phải giữ. Bản mới là một version mới, không ghi đè bản cũ.",
+      "actions": [
+        "WorkHub: tab BRS/DD → thêm tài liệu mới, hoặc thêm version mới cho tài liệu đã có",
+        "Đính kèm file của version đó",
+        "Mô tả rõ nội dung thay đổi so với version trước",
+        "Không xóa, không ghi đè version trước"
+      ],
+      "checklist": [
+        "Đã đính kèm file, không phải chỉ có link",
+        "Đã ghi phiên bản",
+        "Đã ghi người bàn giao",
+        "Các version cũ vẫn còn nguyên"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Xác định bản đang áp dụng",
+      "description": "Bản LÀM THEO luôn là bản cuối cùng của tài liệu đó",
+      "actions": [
+        "Bản cuối cùng = bản đang áp dụng, code bám theo bản này",
+        "Bản cũ chỉ để đối chiếu xem đã đổi những gì",
+        "Nếu không chắc bản nào là mới nhất — hỏi lại người bàn giao"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Đối chiếu DD với BRS",
+      "description": "Phát hiện mâu thuẫn giữa 2 loại tài liệu trước khi code",
+      "actions": [
+        "So phần nghiệp vụ trong BRS với thiết kế trong DD",
+        "Có mâu thuẫn: LÀM THEO DD (ưu tiên cao hơn)",
+        "Báo BA cập nhật BRS cho khớp với DD",
+        "Ghi lại điểm mâu thuẫn vào task để sau này truy được"
+      ]
+    },
+    {
+      "step": 6,
+      "name": "Đánh giá ảnh hưởng (chỉ khi tiếp nhận lại)",
+      "description": "Task đang chạy dở mà tài liệu đổi thì bắt buộc đánh giá — chưa đánh giá xong thì chưa code tiếp",
+      "actions": [
+        "BRS đổi: scope phải làm thêm/bỏ đi, code phải sửa, test phải viết lại, effort cộng thêm",
+        "DD đổi: rà lại TOÀN BỘ BRS liên quan, liệt kê các điểm BRS không còn khớp DD mới",
+        "DD đổi: xem lại kiến trúc/thiết kế, phần code đã viết theo thiết kế cũ",
+        "Kiểm tra ảnh hưởng tới tích hợp bên thứ 3 và lịch golive"
+      ]
+    },
+    {
+      "step": 7,
+      "name": "Confirm và chốt (chỉ khi tiếp nhận lại)",
+      "description": "Chốt bằng văn bản, không chốt miệng",
+      "actions": [
+        "BRS đổi: gửi đánh giá ảnh hưởng cho BA + Lead",
+        "DD đổi: trình bày cho Lead, Lead chốt phạm vi làm lại và lịch",
+        "Ghi rõ ai confirm/quyết định và lúc nào",
+        "Ảnh hưởng Lớn: Lead quyết định có đẩy lịch hay không",
+        "Lưu mail/chat confirm vào task"
+      ]
+    },
+    {
+      "step": 8,
+      "name": "Cập nhật task & re-estimate (chỉ khi tiếp nhận lại)",
+      "description": "Đưa thay đổi vào kế hoạch thay vì làm âm thầm",
+      "actions": [
+        "Cập nhật mô tả / acceptance criteria theo bản mới",
+        "Thêm TODO phát sinh cho phần việc mới hoặc phải làm lại",
+        "Re-estimate theo quy trình Planning & Estimation",
+        "Cập nhật lại Azure DevOps nếu đổi effort hoặc scope"
+      ]
+    },
+    {
+      "step": 9,
+      "name": "Xử lý khi thiếu tài liệu hoặc thay đổi chưa vào tài liệu",
+      "description": "Không tự suy diễn, không âm thầm làm theo yêu cầu miệng",
+      "actions": [
+        "Thiếu BRS: hỏi BA. Thiếu hoặc chưa có DD: hỏi Lead",
+        "Yêu cầu mới nhưng tài liệu chưa đổi: yêu cầu BA/Lead cập nhật tài liệu trước",
+        "Gấp mà chưa kịp cập nhật tài liệu: xin quyết định Lead, ghi vào tab Thay đổi với thẩm quyền 'Quyết định Lead'",
+        "Chưa có quyết định Lead thì CHƯA làm — ghi nhận là 'Chờ BA cập nhật BRS'",
+        "Không tự quyết định nghiệp vụ thay BA"
+      ]
+    }
+  ],
+  "impactLevels": [
+    {
+      "name": "Nhỏ",
+      "description": "Sửa text, label, validate đơn giản — không đổi estimate",
+      "action": "Ghi nhận, làm tiếp bình thường"
+    },
+    {
+      "name": "Trung bình",
+      "description": "Thêm/sửa logic trong phạm vi module hiện tại",
+      "action": "Re-estimate, báo Lead"
+    },
+    {
+      "name": "Lớn",
+      "description": "Đổi luồng nghiệp vụ, đổi schema, đổi thiết kế trong DD, ảnh hưởng module khác hoặc bên thứ 3",
+      "action": "Dừng code, họp lại với BA + Lead, chốt lại scope và lịch trước khi làm tiếp"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Tài liệu trong task",
+      "path": "tasks/[task-id]/task.json",
+      "description": "Danh sách DD + BRS, mỗi tài liệu có đủ lịch sử version, bản cuối là bản đang áp dụng"
+    },
+    {
+      "name": "File tài liệu các version",
+      "path": "tasks/[task-id]/files/",
+      "description": "File của mọi version đã nhận — bản cũ giữ nguyên để đối chiếu"
+    },
+    {
+      "name": "Lịch sử thay đổi",
+      "path": "tasks/[task-id]/task.json",
+      "description": "Số lần BRS/DD đổi + các thay đổi chưa vào tài liệu, kèm người confirm và mức ảnh hưởng"
+    }
+  ],
+  "checklist": [
+    "Đã xác định task cần những tài liệu nào",
+    "Đã nhận đủ BRS liên quan; đã nhận DD nếu task có DD",
+    "Mỗi tài liệu đã ghi đúng loại (DD / BRS), số hiệu, phiên bản, người bàn giao",
+    "Đã đính kèm file cho từng version",
+    "Các version cũ vẫn còn nguyên, không bị ghi đè",
+    "Đã xác định rõ bản nào đang áp dụng (bản cuối)",
+    "Đã đối chiếu DD với BRS, ghi lại mâu thuẫn (nếu có)",
+    "Tiếp nhận lại: đã mô tả rõ nội dung thay đổi so với version trước",
+    "Tiếp nhận lại: đã đánh giá ảnh hưởng scope / code / test / estimate",
+    "Tiếp nhận lại: đã ghi người confirm và thời điểm confirm",
+    "Tiếp nhận lại: đã re-estimate nếu ảnh hưởng từ Trung bình trở lên"
+  ],
+  "notes": [
+    "Tài liệu thay đổi = tiếp nhận lại. Không có quy trình riêng cho việc thay đổi.",
+    "Luôn giữ tất cả version — không bao giờ ghi đè hoặc xóa bản cũ",
+    "Bản làm theo luôn là bản cuối cùng",
+    "DD ưu tiên cao hơn BRS; quyết định của Lead ưu tiên cao hơn cả DD lẫn BRS",
+    "Yêu cầu mới phải vào BRS/DD trước, dev làm sau — ngoại lệ duy nhất là quyết định của Lead và phải ghi nhận lại",
+    "Chỉ có link mà không có file là chưa đủ — link có thể bị sửa hoặc mất quyền truy cập",
+    "Thay đổi không có bằng chứng confirm = không làm — tránh cãi nhau lúc nghiệm thu",
+    "DD ít đổi nên dễ chủ quan — mỗi lần DD đổi đều phải rà lại BRS, không bỏ qua",
+    "BRS đổi quá nhiều lần là tín hiệu yêu cầu chưa chín — báo Lead sớm thay vì gánh im lặng",
+    "Thay đổi chưa vào tài liệu phải được BA/Lead hợp thức hóa ở lần phát hành gần nhất"
+  ]
+}

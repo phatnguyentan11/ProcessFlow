@@ -75,14 +75,19 @@
         try {
           if (!Tasks.isConnected()) { UI.toast("Hãy chọn thư mục lưu trước khi import."); fileInput.value = ""; return; }
           var tasks = Store.parseImport(String(reader.result));
-          if (!window.confirm("Import sẽ THAY THẾ toàn bộ task hiện tại bằng " + tasks.length +
-            " task từ file (ghi vào thư mục đang chọn). Tiếp tục?")) { fileInput.value = ""; return; }
-          Tasks.replaceAll(tasks);
-          UI.toast("Đã import " + tasks.length + " task.");
+          UI.confirm("Import sẽ THAY THẾ toàn bộ task hiện tại bằng " + tasks.length +
+            " task từ file (ghi vào thư mục đang chọn). Tiếp tục?", { okText: "Tiếp tục", danger: true })
+            .then(function (ok) {
+              if (ok) {
+                Tasks.replaceAll(tasks);
+                UI.toast("Đã import " + tasks.length + " task.");
+              }
+              fileInput.value = "";
+            });
         } catch (e) {
           UI.toast("Import lỗi: " + e.message);
+          fileInput.value = "";
         }
-        fileInput.value = "";
       };
       reader.readAsText(file);
     });

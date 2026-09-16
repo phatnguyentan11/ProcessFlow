@@ -1,0 +1,74 @@
+{
+  "id": "t-mu3vj23l-io4f9",
+  "stage": 0,
+  "todos": [],
+  "documents": [
+    {
+      "id": "t-mu3vvg84-sit5n",
+      "time": "2026-09-16T09:13:34.180Z",
+      "name": "Video record WT",
+      "url": "https://vibonline-my.sharepoint.com/personal/nga_daothuy_vib_com_vn/_layouts/15/stream.aspx?id=%2Fpersonal%2Fnga_daothuy_vib_com_vn%2FDocuments%2FB%E1%BA%A3n+ghi%2F%5BMSS%5D+WT+BRS+Auto+Loan-20260916_110210-Meeting+Recording.mp4&referrer=StreamWebApp.Web&referrerScenario=AddressBarCopied.view.f7665f95-0416-43e1-8c72-e1c84353d20c&isDarkMode=true",
+      "owner": "ba"
+    }
+  ],
+  "integrations": [],
+  "notes": [
+    {
+      "id": "t-mu3xo1bh-8ttvq",
+      "time": "2026-09-16T10:03:47.501Z",
+      "text": "Notes",
+      "images": []
+    }
+  ],
+  "mails": [],
+  "golive": [],
+  "brs": [
+    {
+      "id": "t-mu3wroi7-6ubga",
+      "kind": "BRS",
+      "name": "BRS_MySS_Auto Loan_20260915",
+      "url": "",
+      "note": "",
+      "time": "2026-09-16T09:38:36.796Z",
+      "versions": [
+        {
+          "id": "t-mu3wrnng-ftk0a",
+          "version": "v1.0",
+          "time": "2026-09-16T09:38:36.796Z",
+          "changeSummary": "",
+          "confirmedBy": "BA Nga",
+          "confirmedAt": "",
+          "impact": "",
+          "file": {
+            "name": "BRS_MySS_Auto Loan_20260915.xlsx",
+            "storedAs": "mu3wrnnl_0sdy__BRS_MySS_Auto_Loan_20260915.xlsx"
+          }
+        }
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "id": "t-mu3vsgxo-7ew68",
+      "time": "2026-09-16T09:11:15.132Z",
+      "text": "Sheet R3, Anh Bình đang confirm với BA về việc lưu matrix table kết quả check eKYC của Borrower và Co-Borrower chuyển qua bên bạn tự tổng hợp thay vì tự tổng hợp matrix  sau đó chuyển qua",
+      "channel": "Chat",
+      "authority": "Chờ BA cập nhật BRS",
+      "confirmedBy": "",
+      "confirmedAt": "2026-09-16",
+      "impact": "Nhỏ"
+    }
+  ],
+  "sheetTasks": [],
+  "createdAt": "2026-09-16T09:03:56.001Z",
+  "updatedAt": "2026-09-16T10:03:47.501Z",
+  "title": "AUTO LOAN FUNCTION DEVELOPMENT",
+  "taskId": "16092026",
+  "source": "Excel workboard plan",
+  "type": "Feature",
+  "priority": "Medium",
+  "status": "In Progress",
+  "ac": "AUTO LOAN FUNCTION DEVELOPMENT",
+  "sheet": "",
+  "parentTaskId": ""
+}

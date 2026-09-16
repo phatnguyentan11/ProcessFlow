@@ -156,8 +156,11 @@
       el("button", {
         class: "entry__del", type: "button", title: "Xóa", text: "✕",
         onclick: function () {
-          t.sheetTasks = (t.sheetTasks || []).filter(function (x) { return x.id !== s.id; });
-          ctx.refresh();
+          UI.confirm('Xóa sub-task "' + (s.text || "") + '"?', { okText: "Xóa", danger: true }).then(function (ok) {
+            if (!ok) return;
+            t.sheetTasks = (t.sheetTasks || []).filter(function (x) { return x.id !== s.id; });
+            ctx.refresh();
+          });
         },
       }),
     ]));

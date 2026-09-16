@@ -17,6 +17,24 @@
 
   var el = UI.el;
 
+  // Form "thêm mới" ẩn theo mặc định, chỉ hiện khi bấm nút "+ ..." (key: "<taskId>:<section>").
+  // Không lưu xuống đĩa, không dirty updatedAt — chỉ vẽ lại (giống editingFor trong sheet.js).
+  var openAdders = {};
+  function isAdderOpen(key) { return !!openAdders[key]; }
+  function toggleAdder(key, ctx) {
+    if (openAdders[key]) delete openAdders[key]; else openAdders[key] = true;
+    ctx.rerender();
+  }
+  function closeAdder(key) { delete openAdders[key]; }
+  function adderToggleBtn(label, key, ctx) {
+    return el("div", { class: "right", style: "margin-bottom:12px" }, [
+      el("button", { class: "btn btn--sm", type: "button", text: label, onclick: function () { toggleAdder(key, ctx); } }),
+    ]);
+  }
+  function cancelAdderBtn(key, ctx) {
+    return el("button", { class: "btn btn--sm", type: "button", text: "Hủy", onclick: function () { toggleAdder(key, ctx); } });
+  }
+
   var IMPACTS = ["Nhỏ", "Trung bình", "Lớn"];
   var IMPACT_BADGE = { "Nhỏ": "", "Trung bình": "badge--warn", "Lớn": "badge--danger" };
   var CHANNELS = ["Mail", "Chat", "Meeting", "Khác"];
@@ -173,12 +191,6 @@
     ]);
   }
 
-  function addButton(text, onclick) {
-    return el("div", { class: "right" }, [
-      el("button", { class: "btn btn--primary btn--sm", type: "button", text: text, onclick: onclick }),
-    ]);
-  }
-
   function confirmLine(o) {
     if (!o.confirmedBy && !o.confirmedAt) return null;
     var s = "BA confirm: " + (o.confirmedBy || "—");
@@ -205,6 +217,9 @@
   }
 
   function brsAddForm(t, ctx) {
+    var docKey = t.id + ":brsdoc";
+    if (!isAdderOpen(docKey)) return adderToggleBtn("+ Gắn tài liệu mới", docKey, ctx);
+
     var kind = ctx.select(KINDS, KIND_BRS);
     var name = el("input", { class: "input", placeholder: "Tên tài liệu (tự điền từ file/link, sửa được)" });
     var ver = el("input", { class: "input", placeholder: "Phiên bản (VD: v1.0)" });
@@ -229,6 +244,7 @@
         id: Store.uid(), version: ver.value.trim() || DEFAULT_BASELINE_VERSION,
         time: now, changeSummary: "", confirmedBy: by.value.trim(), confirmedAt: "", impact: "",
       };
+      closeAdder(docKey);
       withFile(t.id, src.file, baseline, function (v) {
         (t.brs = t.brs || []).push({
           id: Store.uid(), kind: kind.value, name: n, url: link,
@@ -245,7 +261,10 @@
       name,
       el("div", { class: "grid2" }, [ver, by]),
       note,
-      addButton("+ Gắn tài liệu", add),
+      el("div", { class: "right" }, [
+        cancelAdderBtn(docKey, ctx),
+        el("button", { class: "btn btn--primary btn--sm", type: "button", text: "+ Gắn tài liệu", onclick: add }),
+      ]),
     ]);
   }
 
@@ -275,9 +294,12 @@
       el("button", {
         class: "entry__del", type: "button", title: "Xóa tài liệu này", text: "✕",
         onclick: function () {
-          if (!window.confirm('Xóa tài liệu "' + (b.name || b.code) + '" cùng toàn bộ version?')) return;
-          t.brs = (t.brs || []).filter(function (x) { return x.id !== b.id; });
-          ctx.refresh();
+          UI.confirm('Xóa tài liệu "' + (b.name || b.code) + '" cùng toàn bộ version?', { okText: "Xóa", danger: true })
+            .then(function (ok) {
+              if (!ok) return;
+              t.brs = (t.brs || []).filter(function (x) { return x.id !== b.id; });
+              ctx.refresh();
+            });
         },
       }),
     ]));
@@ -311,8 +333,12 @@
         el("button", {
           class: "entry__del", type: "button", title: "Xóa version", text: "✕",
           onclick: function () {
-            b.versions = versionsOf(b).filter(function (x) { return x.id !== v.id; });
-            ctx.refresh();
+            UI.confirm('Xóa version "' + (v.version || "—") + '" của "' + (b.name || b.code) + '"?',
+              { okText: "Xóa", danger: true }).then(function (ok) {
+                if (!ok) return;
+                b.versions = versionsOf(b).filter(function (x) { return x.id !== v.id; });
+                ctx.refresh();
+              });
           },
         }),
       ]),
@@ -323,6 +349,9 @@
   }
 
   function versionAddForm(t, b, ctx) {
+    var verKey = t.id + ":brsver:" + b.id;
+    if (!isAdderOpen(verKey)) return adderToggleBtn("+ Thêm version mới", verKey, ctx);
+
     var ver = el("input", { class: "input", placeholder: "Version mới (VD: v1.1)" });
     var impact = ctx.select(IMPACTS, "Nhỏ");
     var summary = el("input", { class: "input", placeholder: "Đổi cái gì so với version trước?" });
@@ -339,6 +368,7 @@
         url: src.url.value.trim(), confirmedBy: by.value.trim(), confirmedAt: at.value,
         impact: impact.value,
       };
+      closeAdder(verKey);
       withFile(t.id, src.file, entry, function (e) {
         (b.versions = versionsOf(b)).push(e);
         ctx.refresh();
@@ -351,7 +381,10 @@
       el("div", { class: "grid2" }, [ver, impact]),
       summary,
       el("div", { class: "grid2" }, [by, at]),
-      addButton("+ Thêm version mới", add),
+      el("div", { class: "right" }, [
+        cancelAdderBtn(verKey, ctx),
+        el("button", { class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm version mới", onclick: add }),
+      ]),
     ]);
   }
 
@@ -374,6 +407,9 @@
 
   // 1 form cho cả 2 loại: Note (kèm ảnh dán) và Thay đổi ngoài tài liệu.
   function entryAddForm(t, ctx) {
+    var entryKey = t.id + ":notes";
+    if (!isAdderOpen(entryKey)) return adderToggleBtn("+ Thêm ghi chú / thay đổi mới", entryKey, ctx);
+
     var kind = ctx.select(ENTRY_KINDS, ENTRY_NOTE);
     var text = el("textarea", { placeholder: "Nội dung… (Ctrl+V để dán ảnh)" });
     var preview = el("div", { class: "img-preview" });
@@ -462,10 +498,12 @@
       var v = text.value.trim();
       if (isChange()) {
         if (!v) { UI.toast("Nhập nội dung thay đổi."); return; }
+        closeAdder(entryKey);
         addChange(v);
         return;
       }
       if (!v && !pending.length) return;
+      closeAdder(entryKey);
       addNote(v);
     }
 
@@ -474,7 +512,10 @@
       text,
       preview,
       changeRows,
-      addButton("+ Thêm", add),
+      el("div", { class: "right" }, [
+        cancelAdderBtn(entryKey, ctx),
+        el("button", { class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm", onclick: add }),
+      ]),
     ]);
   }
 

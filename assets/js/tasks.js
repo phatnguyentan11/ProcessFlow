@@ -97,6 +97,24 @@
     if (list) list.scrollTop = listY;
   }
 
+  // Form "thêm mới" ẩn theo mặc định, chỉ hiện khi bấm nút "+ ..." (key: "<taskId>:<section>").
+  // Không lưu xuống đĩa, không dirty updatedAt — chỉ vẽ lại (giống editingFor trong sheet.js).
+  var openAdders = {};
+  function isAdderOpen(key) { return !!openAdders[key]; }
+  function toggleAdder(key) {
+    if (openAdders[key]) delete openAdders[key]; else openAdders[key] = true;
+    rerenderDetail();
+  }
+  function closeAdder(key) { delete openAdders[key]; }
+  function adderToggleBtn(label, key) {
+    return el("div", { class: "right", style: "margin-bottom:12px" }, [
+      el("button", { class: "btn btn--sm", type: "button", text: label, onclick: function () { toggleAdder(key); } }),
+    ]);
+  }
+  function cancelAdderBtn(key) {
+    return el("button", { class: "btn btn--sm", type: "button", text: "Hủy", onclick: function () { toggleAdder(key); } });
+  }
+
   function refreshAfterMutation() {
     var t = current();
     if (t) t.updatedAt = new Date().toISOString();
@@ -451,8 +469,11 @@
       el("button", {
         class: "entry__del", type: "button", title: "Xóa", text: "✕",
         onclick: function () {
-          t.todos = (t.todos || []).filter(function (x) { return x.id !== item.id; });
-          refreshAfterMutation();
+          UI.confirm("Xóa việc cần làm này?", { okText: "Xóa", danger: true }).then(function (ok) {
+            if (!ok) return;
+            t.todos = (t.todos || []).filter(function (x) { return x.id !== item.id; });
+            refreshAfterMutation();
+          });
         },
       }),
     ]);
@@ -471,29 +492,36 @@
         el("span", { class: "subsection__count", text: String(items.length) }),
       ]));
 
-      var name = el("input", { class: "input", placeholder: "Tên tài liệu" });
-      var url = el("input", { class: "input", placeholder: "Link / đường dẫn (tùy chọn)" });
-      var file = el("input", { type: "file", class: "file-input" });
-      panel.appendChild(el("div", { class: "add-row" }, [
-        name,
-        url,
-        fileRow("Đính file (tùy chọn):", file),
-        el("div", { class: "right" }, [
-          el("button", {
-            class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm tài liệu",
-            onclick: function () {
-              var n = name.value.trim();
-              var fl = file.files[0];
-              if (!n && !fl) return;
-              var entry = {
-                id: Store.uid(), time: new Date().toISOString(),
-                name: n || (fl && fl.name), url: url.value.trim(), owner: g.owner,
-              };
-              addEntryWithFile(t, "documents", entry, fl);
-            },
-          }),
-        ]),
-      ]));
+      var docKey = t.id + ":documents:" + g.owner;
+      if (!isAdderOpen(docKey)) {
+        panel.appendChild(adderToggleBtn("+ Thêm tài liệu mới", docKey));
+      } else {
+        var name = el("input", { class: "input", placeholder: "Tên tài liệu" });
+        var url = el("input", { class: "input", placeholder: "Link / đường dẫn (tùy chọn)" });
+        var file = el("input", { type: "file", class: "file-input" });
+        panel.appendChild(el("div", { class: "add-row" }, [
+          name,
+          url,
+          fileRow("Đính file (tùy chọn):", file),
+          el("div", { class: "right" }, [
+            cancelAdderBtn(docKey),
+            el("button", {
+              class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm tài liệu",
+              onclick: function () {
+                var n = name.value.trim();
+                var fl = file.files[0];
+                if (!n && !fl) return;
+                var entry = {
+                  id: Store.uid(), time: new Date().toISOString(),
+                  name: n || (fl && fl.name), url: url.value.trim(), owner: g.owner,
+                };
+                closeAdder(docKey);
+                addEntryWithFile(t, "documents", entry, fl);
+              },
+            }),
+          ]),
+        ]));
+      }
 
       if (!items.length) {
         panel.appendChild(el("p", { class: "muted", style: "margin-bottom:18px", text: "Chưa có tài liệu nào." }));
@@ -515,33 +543,41 @@
   /* ---------- mails (subject/from/date/body + optional file) ---------- */
   function mailsPanel(t) {
     var panel = el("div", { class: "tab-panel is-active" });
-    var subject = el("input", { class: "input", placeholder: "Subject" });
-    var from = el("input", { class: "input", placeholder: "From (người gửi)" });
-    var date = el("input", { class: "input", type: "date" });
-    var body = el("textarea", { placeholder: "Nội dung / tóm tắt email…" });
-    var file = el("input", { type: "file", class: "file-input" });
+    var mailKey = t.id + ":mails";
 
-    panel.appendChild(el("div", { class: "add-row" }, [
-      subject,
-      el("div", { class: "grid2" }, [from, date]),
-      body,
-      fileRow("Đính file (.eml, .msg, ảnh…):", file),
-      el("div", { class: "right" }, [
-        el("button", {
-          class: "btn btn--primary btn--sm", type: "button", text: "+ Đính mail",
-          onclick: function () {
-            var s = subject.value.trim();
-            var f = file.files[0];
-            if (!s && !body.value.trim() && !f) return;
-            var entry = {
-              id: Store.uid(), time: new Date().toISOString(),
-              subject: s, from: from.value.trim(), date: date.value, body: body.value.trim(),
-            };
-            addEntryWithFile(t, "mails", entry, f);
-          },
-        }),
-      ]),
-    ]));
+    if (!isAdderOpen(mailKey)) {
+      panel.appendChild(adderToggleBtn("+ Đính mail mới", mailKey));
+    } else {
+      var subject = el("input", { class: "input", placeholder: "Subject" });
+      var from = el("input", { class: "input", placeholder: "From (người gửi)" });
+      var date = el("input", { class: "input", type: "date" });
+      var body = el("textarea", { placeholder: "Nội dung / tóm tắt email…" });
+      var file = el("input", { type: "file", class: "file-input" });
+
+      panel.appendChild(el("div", { class: "add-row" }, [
+        subject,
+        el("div", { class: "grid2" }, [from, date]),
+        body,
+        fileRow("Đính file (.eml, .msg, ảnh…):", file),
+        el("div", { class: "right" }, [
+          cancelAdderBtn(mailKey),
+          el("button", {
+            class: "btn btn--primary btn--sm", type: "button", text: "+ Đính mail",
+            onclick: function () {
+              var s = subject.value.trim();
+              var f = file.files[0];
+              if (!s && !body.value.trim() && !f) return;
+              var entry = {
+                id: Store.uid(), time: new Date().toISOString(),
+                subject: s, from: from.value.trim(), date: date.value, body: body.value.trim(),
+              };
+              closeAdder(mailKey);
+              addEntryWithFile(t, "mails", entry, f);
+            },
+          }),
+        ]),
+      ]));
+    }
 
     var mails = t.mails || [];
     if (!mails.length) { panel.appendChild(el("p", { class: "muted", text: "Chưa đính mail nào." })); return panel; }
@@ -597,32 +633,40 @@
 
   function integrationsPanel(t) {
     var panel = el("div", { class: "tab-panel is-active" });
-    var name = el("input", { class: "input", placeholder: "Tên API / stored procedure" });
-    var kind = select(INTEG_KINDS, "API");
-    var provider = el("input", { class: "input", placeholder: "Bên thứ 3 (VD: Core T24)" });
-    var expected = el("input", { class: "input", type: "date" });
-    var status = select(INTEG_STATUS, "Chờ bàn giao");
+    var igKey = t.id + ":integrations";
 
-    panel.appendChild(el("div", { class: "add-row" }, [
-      name,
-      el("div", { class: "grid2" }, [provider, kind]),
-      el("div", { class: "grid2" }, [labeledField("Hẹn bàn giao", expected), labeledField("Trạng thái", status)]),
-      el("div", { class: "right" }, [
-        el("button", {
-          class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm integration",
-          onclick: function () {
-            var n = name.value.trim();
-            if (!n) return;
-            (t.integrations = t.integrations || []).unshift({
-              id: Store.uid(), time: new Date().toISOString(), name: n, kind: kind.value,
-              provider: provider.value.trim(), status: status.value, expectedAt: expected.value,
-              note: "", handovers: [],
-            });
-            refreshAfterMutation();
-          },
-        }),
-      ]),
-    ]));
+    if (!isAdderOpen(igKey)) {
+      panel.appendChild(adderToggleBtn("+ Thêm integration mới", igKey));
+    } else {
+      var name = el("input", { class: "input", placeholder: "Tên API / stored procedure" });
+      var kind = select(INTEG_KINDS, "API");
+      var provider = el("input", { class: "input", placeholder: "Bên thứ 3 (VD: Core T24)" });
+      var expected = el("input", { class: "input", type: "date" });
+      var status = select(INTEG_STATUS, "Chờ bàn giao");
+
+      panel.appendChild(el("div", { class: "add-row" }, [
+        name,
+        el("div", { class: "grid2" }, [provider, kind]),
+        el("div", { class: "grid2" }, [labeledField("Hẹn bàn giao", expected), labeledField("Trạng thái", status)]),
+        el("div", { class: "right" }, [
+          cancelAdderBtn(igKey),
+          el("button", {
+            class: "btn btn--primary btn--sm", type: "button", text: "+ Thêm integration",
+            onclick: function () {
+              var n = name.value.trim();
+              if (!n) return;
+              (t.integrations = t.integrations || []).unshift({
+                id: Store.uid(), time: new Date().toISOString(), name: n, kind: kind.value,
+                provider: provider.value.trim(), status: status.value, expectedAt: expected.value,
+                note: "", handovers: [],
+              });
+              closeAdder(igKey);
+              refreshAfterMutation();
+            },
+          }),
+        ]),
+      ]));
+    }
 
     var list = t.integrations || [];
     if (!list.length) { panel.appendChild(el("p", { class: "muted", text: "Chưa có tích hợp nào." })); return panel; }
@@ -642,8 +686,12 @@
       el("button", {
         class: "entry__del", type: "button", title: "Xóa integration", text: "✕",
         onclick: function () {
-          t.integrations = (t.integrations || []).filter(function (x) { return x.id !== ig.id; });
-          refreshAfterMutation();
+          UI.confirm('Xóa integration "' + (ig.name || "") + '" cùng toàn bộ lịch sử bàn giao?', { okText: "Xóa", danger: true })
+            .then(function (ok) {
+              if (!ok) return;
+              t.integrations = (t.integrations || []).filter(function (x) { return x.id !== ig.id; });
+              refreshAfterMutation();
+            });
         },
       }),
     ]));
@@ -669,8 +717,11 @@
           el("button", {
             class: "entry__del", type: "button", title: "Xóa", text: "✕",
             onclick: function () {
-              ig.handovers = (ig.handovers || []).filter(function (x) { return x.id !== h.id; });
-              refreshAfterMutation();
+              UI.confirm("Xóa lần bàn giao này?", { okText: "Xóa", danger: true }).then(function (ok) {
+                if (!ok) return;
+                ig.handovers = (ig.handovers || []).filter(function (x) { return x.id !== h.id; });
+                refreshAfterMutation();
+              });
             },
           }),
         ]));
@@ -678,36 +729,43 @@
       card.appendChild(hist);
     }
 
-    var ver = el("input", { class: "input", placeholder: "Phiên bản (v1, v2…)" });
-    var result = select(INTEG_RESULT, "Đạt");
-    var hnote = el("input", { class: "input", placeholder: "Kết quả / ghi chú lần bàn giao" });
-    var hfile = el("input", { type: "file", class: "file-input" });
-    card.appendChild(el("div", { class: "add-row add-row--ho" }, [
-      el("div", { class: "grid2" }, [ver, result]),
-      hnote,
-      fileRow("Đính file (response mẫu, spec…):", hfile),
-      el("div", { class: "right" }, [
-        el("button", {
-          class: "btn btn--sm", type: "button", text: "+ Thêm lần bàn giao",
-          onclick: function () {
-            var entry = {
-              id: Store.uid(), time: new Date().toISOString(),
-              version: ver.value.trim(), result: result.value, note: hnote.value.trim(),
-            };
-            var f = hfile.files[0];
-            var finish = function () {
-              (ig.handovers = ig.handovers || []).push(entry);
-              ig.deliveredAt = entry.time;
-              refreshAfterMutation();
-            };
-            if (f) {
-              ApiStore.saveFile(t.id, f).then(function (ref) { entry.file = ref; finish(); })
-                .catch(function (e) { UI.toast("Lưu file lỗi: " + e.message); });
-            } else finish();
-          },
-        }),
-      ]),
-    ]));
+    var hoKey = t.id + ":handover:" + ig.id;
+    if (!isAdderOpen(hoKey)) {
+      card.appendChild(adderToggleBtn("+ Thêm lần bàn giao mới", hoKey));
+    } else {
+      var ver = el("input", { class: "input", placeholder: "Phiên bản (v1, v2…)" });
+      var result = select(INTEG_RESULT, "Đạt");
+      var hnote = el("input", { class: "input", placeholder: "Kết quả / ghi chú lần bàn giao" });
+      var hfile = el("input", { type: "file", class: "file-input" });
+      card.appendChild(el("div", { class: "add-row add-row--ho" }, [
+        el("div", { class: "grid2" }, [ver, result]),
+        hnote,
+        fileRow("Đính file (response mẫu, spec…):", hfile),
+        el("div", { class: "right" }, [
+          cancelAdderBtn(hoKey),
+          el("button", {
+            class: "btn btn--sm", type: "button", text: "+ Thêm lần bàn giao",
+            onclick: function () {
+              var entry = {
+                id: Store.uid(), time: new Date().toISOString(),
+                version: ver.value.trim(), result: result.value, note: hnote.value.trim(),
+              };
+              var f = hfile.files[0];
+              var finish = function () {
+                (ig.handovers = ig.handovers || []).push(entry);
+                ig.deliveredAt = entry.time;
+                refreshAfterMutation();
+              };
+              closeAdder(hoKey);
+              if (f) {
+                ApiStore.saveFile(t.id, f).then(function (ref) { entry.file = ref; finish(); })
+                  .catch(function (e) { UI.toast("Lưu file lỗi: " + e.message); });
+              } else finish();
+            },
+          }),
+        ]),
+      ]));
+    }
 
     // ghi chú cho integration này
     var noteWrap = el("div", { class: "integ-notes" });
@@ -719,8 +777,11 @@
           el("button", {
             class: "entry__del", type: "button", title: "Xóa", text: "✕",
             onclick: function () {
-              ig.notes = (ig.notes || []).filter(function (x) { return x.id !== n.id; });
-              refreshAfterMutation();
+              UI.confirm("Xóa ghi chú này?", { okText: "Xóa", danger: true }).then(function (ok) {
+                if (!ok) return;
+                ig.notes = (ig.notes || []).filter(function (x) { return x.id !== n.id; });
+                refreshAfterMutation();
+              });
             },
           }),
         ]));
@@ -792,8 +853,11 @@
         el("button", {
           class: "entry__del", type: "button", title: "Xóa", text: "✕",
           onclick: function () {
-            t[coll] = (t[coll] || []).filter(function (x) { return x.id !== entry.id; });
-            refreshAfterMutation();
+            UI.confirm("Xóa mục này?", { okText: "Xóa", danger: true }).then(function (ok) {
+              if (!ok) return;
+              t[coll] = (t[coll] || []).filter(function (x) { return x.id !== entry.id; });
+              refreshAfterMutation();
+            });
           },
         }),
       ]),
@@ -929,13 +993,16 @@
   }
 
   function removeTask(t) {
-    if (!window.confirm('Xóa task "' + (t.title || "") + '"? Sẽ xóa cả thư mục và file đính kèm. Không thể hoàn tác.')) return;
-    state.tasks = state.tasks.filter(function (x) { return x.id !== t.id; });
-    if (state.activeId === t.id) state.activeId = null;
-    renderList();
-    renderDetail();
-    ApiStore.deleteTask(t.id).catch(function (e) { UI.toast("Xóa thư mục lỗi: " + e.message); });
-    UI.toast("Đã xóa task.");
+    UI.confirm('Xóa task "' + (t.title || "") + '"? Sẽ xóa cả thư mục và file đính kèm. Không thể hoàn tác.',
+      { okText: "Xóa", danger: true }).then(function (ok) {
+        if (!ok) return;
+        state.tasks = state.tasks.filter(function (x) { return x.id !== t.id; });
+        if (state.activeId === t.id) state.activeId = null;
+        renderList();
+        renderDetail();
+        ApiStore.deleteTask(t.id).catch(function (e) { UI.toast("Xóa thư mục lỗi: " + e.message); });
+        UI.toast("Đã xóa task.");
+      });
   }
 
   /* ---------- public ---------- */

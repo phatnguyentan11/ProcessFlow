@@ -130,6 +130,47 @@
     esc: esc,
     escWithLinks: escWithLinks,
     fmtDate: fmtDate,
+    // Dialog xác nhận dùng lại #modal-root + theme sẵn có (thay cho window.confirm mặc định).
+    // opts: { okText, cancelText, danger } — danger=true tô đỏ nút xác nhận (hành động xóa).
+    confirm: function (message, opts) {
+      opts = opts || {};
+      var root = document.getElementById("modal-root");
+      return new Promise(function (resolve) {
+        var settled = false;
+        function finish(ok) {
+          if (settled) return;
+          settled = true;
+          document.removeEventListener("keydown", onKey);
+          root.hidden = true;
+          root.innerHTML = "";
+          root.onclick = null;
+          resolve(ok);
+        }
+        function onKey(ev) {
+          if (ev.key === "Escape") finish(false);
+          else if (ev.key === "Enter") finish(true);
+        }
+        var cancelBtn = UI.el("button", {
+          class: "btn", type: "button", text: opts.cancelText || "Hủy",
+          onclick: function () { finish(false); },
+        });
+        var okBtn = UI.el("button", {
+          class: "btn " + (opts.danger ? "btn--danger" : "btn--primary"),
+          type: "button", text: opts.okText || "Đồng ý",
+          onclick: function () { finish(true); },
+        });
+        var modal = UI.el("div", { class: "modal modal--confirm" }, [
+          UI.el("p", { class: "modal__msg", text: message }),
+          UI.el("div", { class: "modal__foot" }, [cancelBtn, okBtn]),
+        ]);
+        root.innerHTML = "";
+        root.appendChild(modal);
+        root.hidden = false;
+        root.onclick = function (ev) { if (ev.target === root) finish(false); };
+        document.addEventListener("keydown", onKey);
+        cancelBtn.focus(); // mặc định an toàn: Enter/focus rơi vào Hủy, không phải nút xóa
+      });
+    },
   };
 
   window.Store = {

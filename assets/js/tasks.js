@@ -84,8 +84,8 @@
     });
   }
 
-  // Vẽ lại nhưng GIỮ NGUYÊN vị trí cuộn — sửa inline không bị giật về đầu trang.
-  // (renderDetail luôn kết thúc bằng scrollTop = 0, đúng khi đổi task/tab, sai khi chỉ sửa 1 ô.)
+  // Vẽ lại nhưng GIỮ NGUYÊN vị trí cuộn — sửa inline hay đổi tab đều không bị giật về đầu trang.
+  // (renderDetail luôn kết thúc bằng scrollTop = 0 — chỉ dùng khi đổi TASK, lúc đó về đầu trang mới đúng.)
   function rerenderDetail() {
     var detail = document.getElementById("task-detail");
     var list = document.getElementById("task-list");
@@ -255,7 +255,7 @@
       bar.appendChild(el("button", {
         class: "tab" + (state.activeTab === tab.id ? " is-active" : ""),
         type: "button",
-        onclick: function () { state.activeTab = tab.id; renderDetail(); },
+        onclick: function () { state.activeTab = tab.id; rerenderDetail(); },
       }, children));
     });
     return bar;

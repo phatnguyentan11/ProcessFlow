@@ -214,19 +214,30 @@
       Store.setPref("navCollapsed", next);
     });
 
-    // inner list column, per view (processes / tasks)
-    document.querySelectorAll(".list-toggle").forEach(function (btn) {
-      var key = btn.getAttribute("data-list-toggle");
+    // per view (processes / tasks): list column, and the page header
+    wireViewToggle("data-list-toggle", "is-list-collapsed", "listCollapsed", ["Thu gọn danh sách", "Mở danh sách"]);
+    wireViewToggle("data-head-toggle", "is-head-collapsed", "headCollapsed", ["Thu gọn tiêu đề", "Mở tiêu đề"]);
+  }
+
+  /**
+   * Buttons [attr="<view>"] toggle `cls` on #view-<view>; state persisted as pref "<pref>.<view>".
+   * @param {string[]} titles  [title when expanded, title when collapsed]
+   */
+  function wireViewToggle(attr, cls, pref, titles) {
+    document.querySelectorAll("[" + attr + "]").forEach(function (btn) {
+      var key = btn.getAttribute(attr);
       var view = document.getElementById("view-" + key);
-      function applyList(collapsed) {
-        view.classList.toggle("is-list-collapsed", collapsed);
-        btn.title = collapsed ? "Mở danh sách" : "Thu gọn danh sách";
+      function apply(collapsed) {
+        view.classList.toggle(cls, collapsed);
+        btn.title = collapsed ? titles[1] : titles[0];
+        btn.setAttribute("aria-label", btn.title);
+        btn.setAttribute("aria-expanded", String(!collapsed));
       }
-      applyList(Store.getPref("listCollapsed." + key, false));
+      apply(Store.getPref(pref + "." + key, false));
       btn.addEventListener("click", function () {
-        var next = !view.classList.contains("is-list-collapsed");
-        applyList(next);
-        Store.setPref("listCollapsed." + key, next);
+        var next = !view.classList.contains(cls);
+        apply(next);
+        Store.setPref(pref + "." + key, next);
       });
     });
   }

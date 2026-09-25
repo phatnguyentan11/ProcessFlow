@@ -76,7 +76,11 @@ body {
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  cursor: default;               /* plain text never shows the I-beam; text stays selectable */
 }
+/* …only real text-entry fields do */
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+textarea, [contenteditable="true"], [contenteditable=""] { cursor: text; }
 
 h1, h2, h3 { margin: 0; line-height: 1.2; letter-spacing: -.01em; }
 h1 { font-size: 1.5rem; }
@@ -199,14 +203,27 @@ textarea { resize: vertical; min-height: 68px; line-height: 1.5; }
 .head-actions .btn { flex: none; }
 .head-actions .search { flex: 1 1 auto; min-width: 0; }
 
-.list-toggle {
-  flex: none; width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+/* the two view-header toggles (list column ⟨ / page header ▴) share one look and size */
+.list-toggle, .head-toggle {
+  flex: none; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; padding: 0;
+  display: grid; place-items: center;
   border: 1px solid var(--border); background: var(--surface); color: var(--text-soft);
   font-size: .95rem; line-height: 1; transition: all var(--dur) var(--ease);
 }
-.list-toggle:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-2); }
+.list-toggle:hover, .head-toggle:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-2); }
 .list-toggle::before { content: "⟨"; }
 .view.is-list-collapsed .list-toggle::before { content: "⟩"; }
+.view__head-left { min-width: 0; }
+
+/* page header collapse (app.js wireViewToggle): one compact line, subtitle + ok storage bar hidden.
+   The storage bar stays visible when it is a warning (server not reachable). */
+/* same ⟨ glyph as the list toggle, turned to point up (collapse) / down (expand) */
+.head-toggle::before { content: "⟨"; display: inline-block; transform: rotate(90deg); }
+.view.is-head-collapsed .head-toggle::before { transform: rotate(-90deg); }
+.view.is-head-collapsed .view__head { align-items: center; padding-bottom: 10px; }
+.view.is-head-collapsed .view__head h1 { font-size: 1.05rem; }
+.view.is-head-collapsed .view__head .muted,
+.view.is-head-collapsed .fs-bar--ok { display: none; }
 
 .split {
   display: grid; grid-template-columns: 320px 1fr; gap: 20px;

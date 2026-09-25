@@ -56,12 +56,22 @@
   background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px);
 }
 
-/* ---------- top bar ---------- */
+/* ---------- top bar: auto-hidden overlay ----------
+   Slid up out of view except its 3px orange bottom edge; revealed while hovered (the edge plus
+   a 10px invisible hot zone below it), while a control inside has keyboard focus, or while the
+   avatar panel is open. It overlays the page instead of taking height. transform-only slide. */
+:root[data-mode="gaming"] .main { position: relative; }
 :root[data-mode="gaming"] .gbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  position: relative; padding: 10px 30px; border-bottom: 1px solid var(--border);
+  position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+  padding: 10px 30px; background: rgba(0, 0, 0, .94); border-bottom: 3px solid rgba(255, 77, 0, .55);
   font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase;
+  transform: translateY(calc(-100% + 3px)); transition: transform 260ms var(--ease);
 }
+:root[data-mode="gaming"] .gbar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; }
+:root[data-mode="gaming"] .gbar:hover,
+:root[data-mode="gaming"] .gbar:focus-within,
+:root[data-mode="gaming"] .gbar:has(.av-panel:not([hidden])) { transform: translateY(0); }
 .gbar__brand { color: var(--text); font-weight: 600; margin-right: auto; }
 .gbar__brand sup { color: var(--accent); }
 .gbar__btn {
@@ -88,10 +98,11 @@
 
 /* ---------- typography + components ---------- */
 :root[data-mode="gaming"] .view__head h1 {
-  font-size: clamp(1.8rem, 1rem + 2.6vw, 3.2rem); line-height: .95;
-  text-transform: uppercase; letter-spacing: -.03em; font-weight: 700; margin: 0 0 6px;
+  font-size: clamp(1.25rem, .9rem + .9vw, 1.6rem); line-height: 1;
+  text-transform: uppercase; letter-spacing: -.02em; font-weight: 700; margin: 0 0 4px;
 }
-:root[data-mode="gaming"] .view__head .muted { font-family: var(--mono); font-size: .76rem; letter-spacing: .02em; }
+:root[data-mode="gaming"] .view__head .muted { font-family: var(--mono); font-size: .7rem; letter-spacing: .02em; }
+:root[data-mode="gaming"] .view.is-head-collapsed .view__head h1 { font-size: 1rem; margin: 0; }
 :root[data-mode="gaming"] .btn { text-transform: uppercase; letter-spacing: .06em; font-size: .76rem; }
 :root[data-mode="gaming"] .btn:hover { transform: none; }
 :root[data-mode="gaming"] .btn--primary { color: #000; }
@@ -229,6 +240,7 @@
 .desk-item:active .desk-lift { transform: translateY(-5px); }
 
 @media (prefers-reduced-motion: reduce) {
+  :root[data-mode="gaming"] .gbar { transition: none; }
   .led__c, .tw, .beacon, .flicker, .desk-anim, .fan, .steam, .desk-cursor, .desk-neon { animation: none; }
   .fan--b { opacity: 0; }
   .led__c:not(:first-child) { opacity: 0; }

@@ -1,0 +1,244 @@
+/* ============================================================
+   WorkHub — gaming mode (basement.studio-inspired)
+   Direction: black + signal orange, big uppercase grotesk,
+   mono labels, CRT scanlines (off on the desk view).
+   Every rule is scoped to :root[data-mode="gaming"] so normal
+   mode is untouched — except the two elements that exist only
+   for gaming mode (.gbar, #view-desk), hidden by default here.
+   ============================================================ */
+
+.gbar { display: none; }
+
+:root[data-mode="gaming"] {
+  --bg: #000;
+  --surface: #0a0a0a;
+  --surface-2: #121212;
+  --surface-sunken: #060606;
+  --border: #262626;
+  --border-strong: #3d3d3d;
+  --text: #ededed;
+  --text-soft: #b8b8b8;
+  --muted: #7a7a7a;
+  --accent: #ff4d00;
+  --accent-soft: rgba(255, 77, 0, .14);
+  --accent-text: #ff7a3d;
+  --ok: #3ddc84;
+  --ok-soft: rgba(61, 220, 132, .12);
+  --warn: #ffb020;
+  --warn-soft: rgba(255, 176, 32, .12);
+  --danger: #ff4d4d;
+  --danger-soft: rgba(255, 77, 77, .12);
+
+  --radius-sm: 2px;
+  --radius: 3px;
+  --radius-lg: 4px;
+  --shadow-sm: none;
+  --shadow: 0 0 0 1px var(--border-strong);
+  --shadow-lg: 0 0 0 1px var(--accent), 0 24px 60px -20px rgba(255, 77, 0, .35);
+
+  --font: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+/* ---------- shell: no sidebar, one full-bleed panel ---------- */
+:root[data-mode="gaming"] body { background: var(--bg); }
+:root[data-mode="gaming"] .sidebar { display: none; }
+:root[data-mode="gaming"] .app-shell,
+:root[data-mode="gaming"] .app-shell.is-nav-collapsed { grid-template-columns: 1fr; padding: 0; gap: 0; }
+:root[data-mode="gaming"] .main { border: 0; border-radius: 0; background: var(--bg); }
+:root[data-mode="gaming"] .view { height: auto; flex: 1; min-height: 0; }
+
+/* CRT scanlines — purely decorative, never intercepts clicks */
+:root[data-mode="gaming"] body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 999;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px);
+}
+
+/* ---------- top bar ---------- */
+:root[data-mode="gaming"] .gbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  position: relative; padding: 10px 30px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase;
+}
+.gbar__brand { color: var(--text); font-weight: 600; margin-right: auto; }
+.gbar__brand sup { color: var(--accent); }
+.gbar__btn {
+  font: inherit; letter-spacing: inherit; color: var(--text-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--border); padding: 6px 12px;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.gbar__btn:hover, .gbar__btn:focus-visible { color: #000; background: var(--accent); border-color: var(--accent); outline: none; }
+.gbar__btn[hidden] { display: none; }
+
+/* ---------- avatar customisation panel (avatar.js) ---------- */
+.av-panel {
+  position: absolute; top: calc(100% + 6px); right: 150px; z-index: 20; width: 270px;
+  display: grid; gap: 10px; padding: 14px; background: #0a0910; border: 1px solid var(--border-strong);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 77, 0, .15);
+}
+.av-panel[hidden] { display: none; }
+.av-panel__title { margin: 0; color: var(--accent); letter-spacing: .12em; }
+.av-panel__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-soft); }
+.av-panel .input { width: 140px; padding: 6px 8px; font-family: var(--mono); font-size: .78rem; text-transform: none; }
+.av-panel input[type="color"] { width: 46px; height: 26px; padding: 0; border: 1px solid var(--border-strong); background: transparent; cursor: pointer; }
+.av-panel input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+.av-panel__foot { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---------- typography + components ---------- */
+:root[data-mode="gaming"] .view__head h1 {
+  font-size: clamp(1.8rem, 1rem + 2.6vw, 3.2rem); line-height: .95;
+  text-transform: uppercase; letter-spacing: -.03em; font-weight: 700; margin: 0 0 6px;
+}
+:root[data-mode="gaming"] .view__head .muted { font-family: var(--mono); font-size: .76rem; letter-spacing: .02em; }
+:root[data-mode="gaming"] .btn { text-transform: uppercase; letter-spacing: .06em; font-size: .76rem; }
+:root[data-mode="gaming"] .btn:hover { transform: none; }
+:root[data-mode="gaming"] .btn--primary { color: #000; }
+:root[data-mode="gaming"] .btn--primary:hover { background: #fff; }
+:root[data-mode="gaming"] .progress__bar { background: var(--accent); }
+:root[data-mode="gaming"] .input:focus,
+:root[data-mode="gaming"] textarea:focus,
+:root[data-mode="gaming"] select:focus { box-shadow: 0 0 0 1px var(--accent); }
+:root[data-mode="gaming"] ::selection { background: var(--accent); color: #000; }
+
+/* ============================================================
+   Desk view — gaming room (markup: desk-scene.js)
+   Colours live in the SVG gradients; CSS only handles layout,
+   interaction states and motion. Every animation touches only
+   transform/opacity so it runs at the display's refresh rate.
+   ============================================================ */
+#view-desk { display: none; }
+/* full-bleed: the scene fills everything under the top bar (fit mode set by desk.js) */
+:root[data-mode="gaming"] #view-desk.is-active {
+  display: flex; flex-direction: column; position: relative; padding: 0; overflow: hidden;
+}
+/* the desk is the hero — no CRT overlay on top of it */
+:root[data-mode="gaming"] body:has(#view-desk.is-active)::after { display: none; }
+
+.desk__scene {
+  flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden;
+  background: linear-gradient(#04031a, #130b33 45%, #0d0a16 80%, #020203);  /* letterbox matches the scene */
+}
+/* city layers, traffic, rain and the room are stacked in one grid cell. Only whole
+   elements move (parallax / loops) — GPU-composited, never repainted per frame.
+   --u = screen px per scene unit, set by desk.js so loops cover exact scene distances. */
+.desk-svg, .desk-layer, .desk-anim { grid-area: 1 / 1; width: 100%; height: 100%; }
+.desk-svg, .desk-anim { display: block; }
+.desk-layer { display: grid; pointer-events: none; will-change: transform; }
+.desk-anim { overflow: visible; will-change: transform; }
+/* will-change makes the city layers stacking contexts, painted after in-flow content —
+   the room must be positioned too, or the city paints over it */
+.desk-svg--room { position: relative; }
+.desk__scene.is-letterbox .desk-layer--rain { display: none; }  /* would fall through the letterbox */
+.desk__hint {
+  position: absolute; left: 24px; bottom: 14px; margin: 0; pointer-events: none;
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .42);
+}
+
+/* ---------- screen content ---------- */
+.desk-screen__label { font-family: var(--mono); font-size: 24px; fill: var(--accent); letter-spacing: .08em; }
+.desk-screen__num { font-family: var(--font); font-size: 190px; font-weight: 700; fill: #f4f1ec; letter-spacing: -.05em; }
+.desk-screen__sub { font-family: var(--mono); font-size: 20px; fill: #8d88a0; letter-spacing: .04em; }
+.desk-spine { font-family: var(--mono); font-size: 15px; font-weight: 700; fill: #1a0a00; letter-spacing: .18em; }
+.desk-ink { font-family: var(--mono); font-size: 15px; font-weight: 600; fill: #6f6a7c; text-anchor: middle; letter-spacing: .4em; }
+.desk-hand { font-family: "Segoe Print", "Comic Sans MS", cursive; font-size: 17px; fill: #2a2622; text-anchor: middle; }
+
+/* ---------- ambient motion ---------- */
+.led__c { animation: led-cycle 9s linear infinite; }
+@keyframes led-cycle { 0%, 100% { opacity: 1; } 33%, 67% { opacity: 0; } }
+.tw { animation: twinkle 5s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: .9; } 50% { opacity: .1; } }
+.beacon { animation: beacon 2.4s steps(1) infinite; }
+@keyframes beacon { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .15; } }
+.flicker { animation: flicker 7s linear infinite; }
+@keyframes flicker { 0%, 91%, 93%, 96%, 100% { opacity: 1; } 92%, 95% { opacity: .35; } }
+/* loops: distances = DeskCity.CAR_LOOP (2040) / RAIN_LOOP (900) scene units */
+.desk-anim--cars-l { animation: cars-l 26s linear infinite; }
+.desk-anim--cars-r { animation: cars-r 32s linear infinite; }
+@keyframes cars-l { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(calc(var(--u, 1px) * -2040), 0, 0); } }
+@keyframes cars-r { from { transform: translate3d(calc(var(--u, 1px) * -2040), 0, 0); } to { transform: translate3d(0, 0, 0); } }
+.desk-anim--rain-a { animation: fall 1.9s linear infinite; }
+.desk-anim--rain-b { animation: fall 2.8s linear infinite; }
+@keyframes fall { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, calc(var(--u, 1px) * 900), 0); } }
+/* fans: two blade sets alternate → reads as spinning, opacity only */
+.fan--a { animation: fan-a .12s linear infinite; }
+.fan--b { animation: fan-b .12s linear infinite; }
+@keyframes fan-a { 0%, 49.9% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes fan-b { 0%, 49.9% { opacity: 0; } 50%, 100% { opacity: 1; } }
+.steam { opacity: 0; animation: steam 2.7s ease-in-out infinite; }
+@keyframes steam { 0%, 100% { opacity: 0; } 30% { opacity: .35; } 60% { opacity: 0; } }
+.desk-cursor { fill: var(--accent); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.decor-front, .desk-shadow, .desk-tag, .desk-neon { pointer-events: none; }
+/* dim room: LED strips/washes inside the room at ~55% (city outside stays bright) */
+.desk-svg--room .led { opacity: .55; }
+.desk-svg--room .desk-surface .led { opacity: 1; }   /* the desk edge LED stays bright so the desk pops */
+
+/* ---------- drapes blown outward by the breeze (desk-room.js curtains()) ----------
+   Whole <svg> elements skewed/scaled → compositor-only. Pivot = each drape's OUTER top corner,
+   expressed from the element centre in scene units × --u (px/unit), exact for slice and meet:
+   rod y = 76, glass edges x = 300 / 1620, scene centre = (960, 540). skewX only, so the tops stay
+   joined at the centre while the hems swing outward — the triangular opening breathes wider. */
+.desk-anim--curtain-l { transform-origin: calc(50% - 660 * var(--u, 1px)) calc(50% - 464 * var(--u, 1px));
+  animation: sway-l 6s ease-in-out infinite alternate; }
+.desk-anim--curtain-r { transform-origin: calc(50% + 660 * var(--u, 1px)) calc(50% - 464 * var(--u, 1px));
+  animation: sway-r 7.3s ease-in-out infinite alternate; }
+@keyframes sway-l { from { transform: skewX(.6deg); } to { transform: skewX(-4.5deg); } }
+@keyframes sway-r { from { transform: skewX(-.6deg); } to { transform: skewX(4.5deg); } }
+
+/* ---------- avatar ("me") — colours from --av-* set by avatar.js ---------- */
+.av-shirt { fill: var(--av-shirt, #23202b); }
+.av-hair { fill: var(--av-hair, #1a1410); }
+.av-skin { fill: var(--av-skin, #e0b48f); }
+.av-text { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: .18em; fill: rgba(255, 255, 255, .82); }
+.no-glasses .av-glasses { display: none; }
+
+/* ---------- neon sweep: each clickable object's outline flashes ~1s, in turn ----------
+   one 6s cycle; --neon-delay (set per object in desk-scene.js) staggers them */
+.desk-neon { opacity: 0; animation: neon-pulse 6s ease-in-out infinite; animation-delay: var(--neon-delay, 0s); }
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0; }
+  5% { opacity: 1; }
+  9% { opacity: .55; }
+  12% { opacity: .95; }
+  20% { opacity: 0; }
+}
+
+/* ---------- interactive objects ---------- */
+.desk-item { cursor: pointer; outline: none; }
+.desk-hit { fill: transparent; }
+.desk-lift, .desk-tag { transition: transform 320ms var(--ease); }
+.desk-shadow { transform-box: fill-box; transform-origin: center; transition: transform 320ms var(--ease), opacity 320ms var(--ease); }
+.desk-shape { stroke: rgba(255, 255, 255, .1); stroke-width: 1.5; transition: stroke var(--dur) var(--ease); }
+
+.desk-tag { opacity: .5; transition: transform 320ms var(--ease), opacity var(--dur) var(--ease); }
+.desk-tag rect { fill: #0a0910; stroke: rgba(255, 255, 255, .18); }
+.desk-tag text { font-family: var(--mono); font-size: 23px; fill: #ededed; text-anchor: middle; letter-spacing: .06em; }
+
+.desk-item:hover .desk-lift, .desk-item:focus-visible .desk-lift,
+.desk-item:hover .desk-tag, .desk-item:focus-visible .desk-tag { transform: translateY(-12px); }
+.desk-item:hover .desk-shadow, .desk-item:focus-visible .desk-shadow { transform: scale(.8); opacity: .55; }
+.desk-item:hover .desk-shape, .desk-item:focus-visible .desk-shape { stroke: var(--accent); stroke-width: 3; }
+.desk-item:hover .desk-tag, .desk-item:focus-visible .desk-tag { opacity: 1; }
+.desk-item:hover .desk-neon, .desk-item:focus-visible .desk-neon { animation: none; opacity: 1; }
+.desk-item:hover .desk-tag rect, .desk-item:focus-visible .desk-tag rect { fill: var(--accent); stroke: var(--accent); }
+.desk-item:hover .desk-tag text, .desk-item:focus-visible .desk-tag text { fill: #000; }
+.desk-item:active .desk-lift { transform: translateY(-5px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .led__c, .tw, .beacon, .flicker, .desk-anim, .fan, .steam, .desk-cursor, .desk-neon { animation: none; }
+  .fan--b { opacity: 0; }
+  .led__c:not(:first-child) { opacity: 0; }
+  .desk-lift, .desk-tag, .desk-shadow { transition: none; }
+  .desk-item:hover .desk-lift, .desk-item:focus-visible .desk-lift,
+  .desk-item:hover .desk-tag, .desk-item:focus-visible .desk-tag,
+  .desk-item:active .desk-lift { transform: none; }
+}
+
+@media (max-width: 900px) {
+  :root[data-mode="gaming"] .gbar { padding: 10px 16px; }
+  .desk__hint { left: 16px; right: 16px; }
+}

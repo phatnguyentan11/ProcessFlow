@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WorkHub — Quy trình & Task Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" />
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/gaming.css" />
 </head>
 <body>
   <div class="app-shell">
@@ -37,12 +40,27 @@
         </button>
         <input id="import-file" type="file" accept="application/json" hidden />
         <button id="btn-theme" class="btn btn--icon" type="button" title="Đổi sáng/tối">◐</button>
+        <button id="btn-mode" class="btn btn--icon" type="button" title="Chuyển sang chế độ Gaming" aria-label="Chuyển sang chế độ Gaming">🎮</button>
         <button id="btn-nav-toggle" class="btn btn--icon" type="button" title="Thu gọn sidebar" aria-label="Thu gọn sidebar">«</button>
       </div>
     </aside>
 
     <!-- Main -->
     <main class="main">
+      <!-- Gaming-mode top bar (hidden in normal mode) -->
+      <div class="gbar">
+        <button id="btn-desk-back" class="gbar__btn" type="button">← VỀ BÀN</button>
+        <span class="gbar__brand">WORKHUB<sup>©</sup></span>
+        <button id="btn-avatar" class="gbar__btn" type="button" title="Tuỳ chỉnh nhân vật">NHÂN VẬT</button>
+        <button id="btn-mode-g" class="gbar__btn" type="button" title="Chuyển về chế độ Bình thường">CHẾ ĐỘ THƯỜNG</button>
+      </div>
+
+      <!-- ===== DESK VIEW (gaming mode only) ===== -->
+      <section id="view-desk" class="view desk" aria-label="Bàn làm việc">
+        <div id="desk-scene" class="desk__scene"></div>
+        <p class="desk__hint">Click hoặc Tab + Enter để mở · Esc để quay về bàn</p>
+      </section>
+
       <!-- ===== PROCESSES VIEW ===== -->
       <section id="view-processes" class="view is-active">
         <header class="view__head">
@@ -115,6 +133,12 @@
   <script src="assets/js/brs.js"></script>
   <script src="assets/js/sheet.js"></script>
   <script src="assets/js/tasks.js"></script>
+  <script src="assets/js/desk-svg.js"></script>
+  <script src="assets/js/desk-city.js"></script>
+  <script src="assets/js/desk-room.js"></script>
+  <script src="assets/js/desk-scene.js"></script>
+  <script src="assets/js/desk.js"></script>
+  <script src="assets/js/avatar.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>

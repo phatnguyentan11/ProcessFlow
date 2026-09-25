@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js — bootstrap: theme, view switching, search, import/export
+   app.js — bootstrap: theme, view switching, UI mode (normal/gaming desk), search, import/export
    ============================================================ */
 (function () {
   "use strict";
@@ -12,6 +12,7 @@
     wireDataButtons();
     wireTheme();
     wireCollapse();
+    wireMode();
 
     // Tasks live in a local folder (File System Access API).
     Tasks.init();
@@ -22,6 +23,7 @@
       .then(function () {
         Processes.renderList();
         Processes.selectFirst();
+        refreshDesk();
       })
       .catch(function (err) {
         console.error(err);
@@ -30,16 +32,23 @@
   });
 
   /* ---------- view switching ---------- */
+  // Single entry point for both the sidebar menu and the gaming-mode desk.
+  function showView(name) {
+    document.querySelectorAll(".nav__item").forEach(function (b) {
+      b.classList.toggle("is-active", b.getAttribute("data-view") === name);
+    });
+    document.querySelectorAll(".view").forEach(function (v) {
+      v.classList.toggle("is-active", v.id === "view-" + name);
+    });
+    document.getElementById("btn-desk-back").hidden = name === "desk";
+    document.getElementById("btn-avatar").hidden = name !== "desk";   // the avatar only lives on the desk
+    if (name === "desk") refreshDesk();
+    else Avatar.close();
+  }
+
   function wireNav() {
-    var items = document.querySelectorAll(".nav__item");
-    items.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        items.forEach(function (b) { b.classList.remove("is-active"); });
-        btn.classList.add("is-active");
-        var view = btn.getAttribute("data-view");
-        document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("is-active"); });
-        document.getElementById("view-" + view).classList.add("is-active");
-      });
+    document.querySelectorAll(".nav__item").forEach(function (btn) {
+      btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); });
     });
   }
 
@@ -59,14 +68,18 @@
   }
 
   /* ---------- export / import ---------- */
+  function exportTasks() {
+    Store.exportTasks(Tasks.getAll());
+    UI.toast("Đã export file JSON.");
+  }
+
+  function openImport() { document.getElementById("import-file").click(); }
+
   function wireDataButtons() {
-    document.getElementById("btn-export").addEventListener("click", function () {
-      Store.exportTasks(Tasks.getAll());
-      UI.toast("Đã export file JSON.");
-    });
+    document.getElementById("btn-export").addEventListener("click", exportTasks);
 
     var fileInput = document.getElementById("import-file");
-    document.getElementById("btn-import").addEventListener("click", function () { fileInput.click(); });
+    document.getElementById("btn-import").addEventListener("click", openImport);
     fileInput.addEventListener("change", function () {
       var file = fileInput.files[0];
       if (!file) return;
@@ -80,6 +93,7 @@
             .then(function (ok) {
               if (ok) {
                 Tasks.replaceAll(tasks);
+                refreshDesk();
                 UI.toast("Đã import " + tasks.length + " task.");
               }
               fileInput.value = "";
@@ -98,6 +112,54 @@
     document.getElementById("btn-theme").addEventListener("click", Store.toggleTheme);
   }
 
+  /* ---------- UI mode: "normal" (sidebar) | "gaming" (desk) ---------- */
+  function applyMode(mode) {
+    document.documentElement.setAttribute("data-mode", mode);
+    showView(mode === "gaming" ? "desk" : "processes");
+  }
+
+  function toggleMode() {
+    var next = document.documentElement.getAttribute("data-mode") === "gaming" ? "normal" : "gaming";
+    Store.setPref("uiMode", next);
+    applyMode(next);
+  }
+
+  function isGaming() { return document.documentElement.getAttribute("data-mode") === "gaming"; }
+
+  function refreshDesk() {
+    var tasks = Tasks.getAll();
+    Desk.update({
+      tasks: tasks.length,
+      open: tasks.filter(function (t) { return t.status !== "Done"; }).length,
+      processes: Processes.getList().length,
+    });
+  }
+
+  function wireMode() {
+    Desk.init(document.getElementById("desk-scene"), {
+      tasks: function () { showView("tasks"); },
+      processes: function () { showView("processes"); },
+      export: exportTasks,
+      import: openImport,
+      mode: toggleMode,
+    });
+    Avatar.init(document.getElementById("desk-scene"), document.getElementById("btn-avatar"));
+    document.getElementById("btn-mode").addEventListener("click", toggleMode);
+    document.getElementById("btn-mode-g").addEventListener("click", toggleMode);
+    document.getElementById("btn-desk-back").addEventListener("click", function () { showView("desk"); });
+
+    // Esc → back to the desk, unless a modal is open or the user is typing/editing.
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape" || !isGaming()) return;
+      if (!document.getElementById("modal-root").hidden) return;
+      var t = ev.target;
+      if (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      showView("desk");
+    });
+
+    applyMode(Store.getPref("uiMode", "normal") === "gaming" ? "gaming" : "normal");
+  }
+
   /* ---------- storage via server.js (API) ---------- */
   function initFolder() {
     ApiStore.info()
@@ -105,6 +167,7 @@
         return ApiStore.loadAll().then(function (tasks) {
           Tasks.setConnected(true);
           Tasks.load(tasks);
+          refreshDesk();
           renderFsBar({ ok: true, path: info.path });
         });
       })

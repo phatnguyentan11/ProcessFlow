@@ -1,8 +1,41 @@
 {
   "id": "t-mu3vj23l-io4f9",
-  "stage": 0,
-  "todos": [],
+  "stage": 2,
+  "todos": [
+    {
+      "id": "t-mu3z5qqf-w6uyj",
+      "time": "2026-09-16T10:45:33.207Z",
+      "text": "F1. Deeplink            (sheet 2)",
+      "done": false,
+      "kind": "initial"
+    },
+    {
+      "id": "t-mu3z5uli-t32d4",
+      "time": "2026-09-16T10:45:38.214Z",
+      "text": "F2. eKYC/eID customer   (sheet 3)",
+      "done": false,
+      "kind": "initial"
+    },
+    {
+      "id": "t-mu3z5y2v-a8qk9",
+      "time": "2026-09-16T10:45:42.727Z",
+      "text": "F3. Update result       (sheet 4)",
+      "done": false,
+      "kind": "initial"
+    }
+  ],
   "documents": [
+    {
+      "id": "t-mu3z9cgm-ntzni",
+      "time": "2026-09-16T10:48:21.334Z",
+      "name": "Plan phân tích BRS",
+      "url": "",
+      "owner": "mine",
+      "file": {
+        "name": "00-overview.txt",
+        "storedAs": "mu3z9cgr_8e8w__00-overview.txt"
+      }
+    },
     {
       "id": "t-mu3vvg84-sit5n",
       "time": "2026-09-16T09:13:34.180Z",
@@ -14,14 +47,20 @@
   "integrations": [],
   "notes": [
     {
-      "id": "t-mu3xo1bh-8ttvq",
-      "time": "2026-09-16T10:03:47.501Z",
-      "text": "Notes",
+      "id": "t-mu6uay6l-eu1j5",
+      "time": "2026-09-18T10:52:56.589Z",
+      "text": "Task 1: ST1-(Update API có sẵn POST 1.0/crm-lead/receive)\n\tMục đích: Tạo record tracking việc xử lý thông tin eKYC, redirect về app SmartSales\n\tRequest: Không có chỉnh sửa\n\tPre:\n\t\t- thêm type mới/deeplink mới cho type mới LeadRecordType = VIB_RB_AutoLoan (confirm với CRM BRS ghi Lead - Lending Auto)\n\t\t- define deeplink type mới:  $\"smartsales.app://crm_autoloan?refid={refId}\"; (confirm với CLIENT)\n\tLuồn xử lý:\n\t\tKhông thay đổi luồn xử lý.\nTask 2: API12 (Mới)- API Get CRM app details (GET myss-lead/api/1.0/auto-loan/crm-app-detail)\n\tMục đích: Lấy thông tin mới nhất của BO(và CO) để MSS sử dụng compare cùng thông tin OCR cho TASK 3\n\tRequest: appId (Lấy từ LeadId khi tạo bằng deeplink với type mới luồn auto loan)\n\tRole: (RM)\n\tLuồn xử lý:\n\t\t1.         Check lead owner & type\n\t\t2. \tCall API lấy thông tin app detail CRM dùng ST3 crm/1.0.0/executeGraphQL\nTask 3: API11(Mới) API Update eKYC/EID result (check borrower vs co-borrower) to CRM (PUT myss-lead/api/1.0/auto-loan/ekyc-result)\n\tMục đích: Cập nhật thông tin kết quả check eKYC của CO, BO vào DB MSS và gửi kết quả eKYC qua CRM\n\tRequest: ekycResult, coBorrowerEkycResult , action [SAVE/SUBMIT]\n\tRole: (RM)\n\tPre \n\t\t- Cần QC config bản matrix (Have co-borrower, Borrower eKYC result, Co-borrower eKYC result) => (eKYC ID result, eKYC result XrequestID)\n\t\t- Đã tạo record từ deeplink ở Task 1\n\t\t- Thêm function database fn_crm_lead_ekyc_result_update (update ekycResult, coBorrowerEkycResult), sửa fn_crm_leadinfo_by_lead_id lấy thêm (ekycResult, coBorrowerEkycResult)\n\tLuồn xử lý:\n\t\t1. Check lead owner & type\n\t\t1. Check action\n\t\t\t- [SAVE]\n\t\t\t\t1.1. Lưu database myss ekycResult, coBorrowerEkycResult\n\t\t\t- [SUBMIT]\n\t\t\t\t1.2. Lấy thông tin từ database\n\t\t\t\t1.3. Tính matrix result từ ekycResult, coBorrowerEkycResult và config\n\t\t\t\t1.4. Call api cập nhật kết quả vào CRM dùng ST2 dob/1.0.0/card-applications/digital/{applicationId} \n\t\t\t\tmẫu req\n\t\t\t\tPUT /myss-lead/api/1.0/auto-loan/ekyc-result\n\t\t\t\t{\n\t\t\t\t  \"leadId\":  \"...\",              // luôn bắt buộc\n\t\t\t\t  \"action\":  \"SAVE\" | \"SUBMIT\",  // enum, không phải string tự do\n\t\t\t\t  \"ekycResult\": \"\",        // Null thì bỏ qua\n\t\t\t\t  \"coBorrowerEkycResult\": \"\" // Null thì bỏ qua\n\t\t\t\t}",
       "images": []
     }
   ],
   "mails": [],
-  "golive": [],
+  "golive": [
+    {
+      "id": "t-mugcf95v-ep3vi",
+      "time": "2026-09-25T02:30:06.115Z",
+      "text": "Có thêm env setting cho các route và scope\npublic string UrlCp4iGetAccessToken => GetValueCacheKeyEnv(\"ENV_GET_CP4I_ACCESS_TOKEN\");\npublic string UrlGetCrmAppDetail => GetValueCacheKeyEnv(\"ENV_GET_CRM_APP_DETAIL\");\npublic string UrlUpdateCrmAppEkyc => GetValueCacheKeyEnv(\"ENV_UPDATE_CRM_APP_EKYC\");\npublic string Cp4iScopeGetCrmAppDetail => GetValueCacheKeyEnv(\"ENV_SCOPE_GET_CRM_APP_DETAIL\");\npublic string Cp4iScopeUpdateCrmAppEkyc => GetValueCacheKeyEnv(\"ENV_SCOPE_UPDATE_CRM_APP_EKYC\");"
+    }
+  ],
   "brs": [
     {
       "id": "t-mu3wroi7-6ubga",
@@ -43,6 +82,20 @@
             "name": "BRS_MySS_Auto Loan_20260915.xlsx",
             "storedAs": "mu3wrnnl_0sdy__BRS_MySS_Auto_Loan_20260915.xlsx"
           }
+        },
+        {
+          "id": "t-mugc6chq-7qo4f",
+          "version": "",
+          "time": "2026-09-25T02:23:10.526Z",
+          "changeSummary": "update logic",
+          "url": "",
+          "confirmedBy": "BA Nga",
+          "confirmedAt": "2026-09-25",
+          "impact": "Nhỏ",
+          "file": {
+            "name": "BRS_MySS_Auto Loan_20260924_v2.xlsx",
+            "storedAs": "mugc6cjh_wvyj__BRS_MySS_Auto_Loan_20260924_v2.xlsx"
+          }
         }
       ]
     }
@@ -61,7 +114,7 @@
   ],
   "sheetTasks": [],
   "createdAt": "2026-09-16T09:03:56.001Z",
-  "updatedAt": "2026-09-16T10:03:47.501Z",
+  "updatedAt": "2026-09-25T02:30:06.115Z",
   "title": "AUTO LOAN FUNCTION DEVELOPMENT",
   "taskId": "16092026",
   "source": "Excel workboard plan",

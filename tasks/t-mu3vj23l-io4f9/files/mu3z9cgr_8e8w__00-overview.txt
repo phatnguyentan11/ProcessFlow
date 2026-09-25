@@ -1,0 +1,557 @@
+================================================================================
+PLAN - TASK 16092026 : AUTO LOAN FUNCTION DEVELOPMENT
+================================================================================
+Status        : draft  (chua co APPROVED - chua duoc sua bat ky file source nao)
+Ngay lap plan : 16/09/2026
+Nguoi lap     : phat.nguyentan11
+Service chinh : src/myss-lead  (VIB.SmartSales.LeadService)
+Service phu   : src/myss-ekyc, src/myss-ecs  -> chi config, KHONG sua code
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. NGUON TAI LIEU
+--------------------------------------------------------------------------------
+
+Task WorkHub : D:\PhatNT\PROCESS NOTES\tasks\t-mu3vj23l-io4f9
+               taskId = 16092026 | type = Feature | status = In Progress
+               source = Excel workboard plan
+
+BRS v1.0     : BRS_MySS_Auto Loan_20260915.xlsx
+               confirmedBy = BA Nga | 14 sheet
+               storedAs = mu3wrnnl_0sdy__BRS_MySS_Auto_Loan_20260915.xlsx
+
+Sheet map    : 00  - BRS change history
+               0   - Muc luc chuc nang
+               1   - Auto loan business understanding (14 step E2E)
+               2   - Deeplink functional logic
+               3   - eKYC customer functional logic
+               4   - Update eKYC result functional logic
+               5   - Usage report / logscreen
+               R1  - ID type definition (NIC/IIC/ICC/ITC)
+               R2  - eKYC/eID error message (93 ma loi)
+               R3  - Update eKYC result to CRM cases (matrix 20 case)
+               ST1 - Push lead info from CRM to SmartSales
+               ST2 - Update eKYC/eID result to CRM
+               ST3 - Get CRM app details
+               Apis- Danh sach 12 API
+
+Video WT     : SharePoint "[MSS] WT BRS Auto Loan-20260916-Meeting Recording"
+
+CHANGE CHUA VAO BRS (khong duoc build o sprint nay):
+  - Sheet R3. Anh Binh dang confirm voi BA: matrix ket qua eKYC cua Borrower
+    va Co-Borrower se do MSS tu tong hop, thay vi CRM tu tong hop roi day qua.
+  - authority = "Cho BA cap nhat BRS"  => CHUA hop le de build.
+  - impact = Nho.
+  - Xu ly: build dung theo BRS hien tai, nhung tach logic matrix ra thanh
+    pure function de neu BA chot theo huong moi thi chi doi CHO GOI,
+    khong phai sua logic. (xem muc 6)
+
+
+--------------------------------------------------------------------------------
+2. PHAM VI NGHIEP VU
+--------------------------------------------------------------------------------
+
+Luong E2E Auto Loan (BRS sheet 1) - 14 step:
+
+  Step 1-3   Dealer tao lead tren Max Super Agent -> push vao CRM
+             -> Decision engine (Knock out, CIC, Scoring, Policy rule)
+  Step 4-5   BM/SM assign lead cho RM tren CRM -> RM pick up -> update RM ve MSA
+  Step 6-7   He thong tao PID tren ACL -> update PID nguoc ve CRM
+  Step 8     RM push lead sang SmartSales (product code 094)          <-- MSS
+  Step 9     RM eKYC/eID khach hang tren SmartSales                   <-- MSS
+  Step 10    So sanh thong tin khach hang (CRM vs OCR)                <-- MSS
+  Step 11    Update ket qua eKYC nguoc ve CRM                         <-- MSS
+  Step 12    RM fulfill proposal tren ACL
+  Step 13    Giai ngan tren ACL
+  Step 14    Khach hang eSign tren MyVIB
+
+=> PHAN MSS PHAI LAM = step 8, 9, 10, 11 = 3 function (BRS sheet 0):
+     F1. Deeplink            (sheet 2)
+     F2. eKYC/eID customer   (sheet 3)
+     F3. Update result       (sheet 4)
+
+Role duoc phep : RM  (BRS sheet 2, r53-54)
+
+Diem khac biet lon nhat so voi cac luong eKYC hien co cua MySS:
+  - Co NGUOI DONG VAY (co-borrower). Toan bo luong phai chay duoc 2 lan
+    (borrower va co-borrower), theo thu tu bat ky, va ket qua phai duoc
+    tong hop lai truoc khi tra ve CRM.
+  - Chi chap nhan CCCD gan chip (ICC = vn.cccd_new) va Can cuoc (ITC = vn.tcc).
+    Cac loai giay to khac -> tu choi, end flow (BRS sheet 3, r81-84).
+
+
+--------------------------------------------------------------------------------
+3. GAP ANALYSIS - DA CO vs PHAI LAM
+--------------------------------------------------------------------------------
+
+Bang 12 API theo BRS sheet "Apis":
+
+ #  API                              Service      Route thuc te trong code          Trang thai
+ -- -------------------------------- ------------ --------------------------------- -------------------
+ 1  Push lead CRM -> MSS (ST1)       myss-lead    POST 1.0/crm-lead/receive         CO, thieu Auto Loan
+ 2  Get lead detail (Api2)           myss-lead    GET  1.0/crm-lead/detail          CO, thieu field
+ 3  Check sanity                     myss-ekyc    POST 1.0/sanity                   CO - dung lai
+ 4  Check tampering                  myss-ekyc    POST 1.0/tampering                CO - dung lai
+ 5  Check OCR                        myss-ekyc    POST 1.0/ocr                      CO - dung lai
+ 6  Check selfie liveness            myss-ekyc    POST 1.0/liveness                 CO - dung lai
+ 7  Read ID card info                myss-ecs     POST 1.0/read-id-card             CO - dung lai
+ 8  Verify ID card (BCA)             myss-ecs     POST 1.0/verify-id-card           CO - dung lai
+ 9  Compare face                     myss-ekyc    POST 1.0/comparefaces             CO - dung lai
+ 10 Get OCR info                     myss-ekyc    GET  1.0/get-ocr-info             CO - dung lai
+ 11 Update eKYC result -> CRM (ST2)  myss-lead    <chua co>                         LAM MOI
+ 12 Get app detail tu CRM (ST3)      myss-lead    <chua co>                         LAM MOI
+
+LUU Y SAI LECH GIUA BRS VA CODE (can thong nhat voi mobile khi integrate):
+  - BRS ghi "myss-ekyc/api/v1.0/..."      -> code that la "myss-ekyc/api/1.0/..."
+  - BRS ghi "compare-faces"               -> code that la "comparefaces"
+  - BRS sheet 3 r146 ghi productid=LENDNG -> phai la LENDING (typo trong BRS)
+
+
+--------------------------------------------------------------------------------
+4. CAC DIEM CHAN CU THE TRONG CODE HIEN TAI
+--------------------------------------------------------------------------------
+
+[B1] RECORD TYPE BI REJECT
+  File : src/myss-lead/VIB.SmartSales.LeadService/Model/Request/CRM/
+         CRMLeadReceiveRequest.cs  (dong 9-13)
+  Hien : ValidRecordTypes = [ VIB_RB_Deposit, VIB_RB_Card ]
+  BRS  : leadRecordType = "Lead - Lending Auto"  (ST1 r43)
+  => Moi request Auto Loan se bi tra loi "The LeadRecordType invalid."
+
+[B2] SINH DEEPLINK SE NEM EXCEPTION
+  File : src/myss-lead/VIB.SmartSales.LeadService/Common/Generators/SFGenerator.cs
+  Hien : switch chi map Card -> "physicalcard", Depo -> "depo",
+         nhanh mac dinh "_" nem InvalidOperationException
+  => Neu chi them record type o [B1] ma quen cho nay thi API tra HTTP 500.
+     Day la bay de bi bo sot nhat trong ca task.
+
+[B3] SO GIAY TO DANG BI XOA TRUOC KHI LUU   *** RUI RO CAO ***
+  File : src/myss-lead/VIB.SmartSales.LeadService/Controllers/
+         ValidateManualController.cs  (dong 38-41)
+  Hien : request.IdentityCard9digitNo      = null;  // don't save
+         request.IdentityCard12digitNo     = null;  // don't save
+         request.IdentityCard12digitwithChip = null; // don't save
+         request.IdentityCard              = null;  // don't save
+  BRS  : Auto Loan BAT BUOC luu lai 4 field nay, vi:
+         - sheet 2 r62-68 : hien thi len man xac thuc cho RM xem
+         - sheet 4 r23,26 : dung de compare voi ket qua OCR
+  => Phai dao nguoc quyet dinh nay, NHUNG chi cho nhanh Lending Auto.
+     CHUA CODE cho toi khi lam ro vi sao truoc day lai xoa (xem muc 8, Q2).
+
+[B4] THIEU ~20 FIELD TRONG REQUEST
+  File : CRMLeadReceiveRequest.cs
+  Thieu: dob, gender,
+         id12WithChipDtIssue, id12WithChipPlaceIssue,
+         identityCardDtIssue, identityCardPlaceIssue,
+         aclPid, ekycResult,
+         coBorrower[] gom 9 field:
+           coBorrowerName, coBorrowerDOB, coBorrowerGender, coBorrowerIdno,
+           coBorrowerIdtype, coBorrowerIdOld, coBorrowerIdDtIssue,
+           coBorrowerIdPlaceIssue, coBorrowerEkycResult
+  (chi tiet kieu du lieu + mandatory: BRS sheet ST1 r17-r58)
+
+[B5] THIEU FIELD TRONG RESULT TRA VE APP
+  File : src/myss-lead/VIB.SmartSales.LeadService/Model/Results/CRMLeadResult.cs
+  Thieu: cac field tuong ung [B4] + ekycResult + coBorrowerEkycResult
+  BRS  : sheet 2 r55-r80 - app can du de render man "Xac thuc khach hang"
+
+[B6] DATABASE CHUA CO CHO CHUA
+  File : src/myss-lead/VIB.SmartSales.LeadService/Repositories/Implements/
+         CRMLeadRepository.cs
+  Hien : goi myss_lead.fn_crm_leadinfo_insert       (25 tham so)
+         goi myss_lead.fn_crm_leadinfo_by_lead_id
+  => Script DB KHONG nam trong repo nay. Phai viet script ban giao DBA:
+     - ALTER TABLE lead: them cot cho [B4]
+     - Sua 2 function tren cho khop so tham so / so cot tra ve
+     - Them function moi: fn_crm_lead_ekyc_result_update
+
+[B7] CHUA CO CLIENT CP4I CHO ST2 / ST3
+  Nhung DA CO SAN pattern de mo rong, KHONG duoc viet lai tu dau:
+     - GatewayServiceBase : Services/Common/ApiGwService.cs  (dong 10)
+     - AgentAppClient     : Services/Common/AgentAppClient.cs  - vi du mau
+     - Config da co       : Cp4iDomain01, Cp4iAppKey, Cp4iTimeOut
+                            (ILeadConfiguration.cs dong 94-97)
+     - Doc secret         : GetValueCacheKeyVault("KEY_VAULT_...")
+                            (LeadConfiguration.cs dong 123)
+
+[B8] ECS - CHI THIEU CONFIG, KHONG THIEU CODE      (da kiem tra 16/09)
+  Repo src/myss-ecs da co day du:
+     POST myss-ecs/api/1.0/read-id-card    (va ban 1.1)
+     POST myss-ecs/api/1.0/verify-id-card
+     Role da bao gom RM -> dung yeu cau BRS.
+  NHUNG: ca 2 endpoint deu goi ConfigService.CheckProductID(request.ProductId)
+     File : src/myss-ecs/VIB.SmartSales.ECSService/Services/ConfigService/
+            ConfigService.cs  (dong 67-90)
+     Logic: doc vib_static_data
+              module = EKYC
+              type   = EKYC_EID
+              name   = PRODUCT_CODE_LIMITED
+            roi split(',') va kiem tra productId co nam trong danh sach khong.
+     Mac dinh ProductId = "CARD" (ReadNFCRequest.cs, CheckBCARequest.cs)
+  => Neu chua them "LENDING" vao dong config do thi read-id-card va
+     verify-id-card se tra INVALID_INPUT.
+  => Day la THAY DOI DU LIEU CONFIG, khong phai thay doi code. Phai nam trong
+     checklist go-live, neu khong se fail ngay tren moi truong test.
+
+[B9] EKYC - CAN XAC NHAN CONFIG MODULE LENDING
+  File : src/myss-ekyc/.../Commons/Extensions/CommonEx.cs
+  Module duoc truyen thang qua (chi CA/PAYROLL bi doi thanh OPEN_*),
+  nen "LENDING" se di qua duoc.
+  NHUNG cac dong config nguong trong vib_static_data co the chua co:
+     MAX_SANITY_LENDING, MAX_TAMPERING_LENDING, SANITY_ENABLED,
+     SANITY_SELFIE_ENABLED, TAMPERING_ENABLED
+     (ten hang so: VibStaticDataConstants trong EKYCConstants.cs)
+  => Phai kiem tra tren DB test truoc khi bao mobile test.
+
+
+--------------------------------------------------------------------------------
+5. DANH SACH FILE THAY DOI
+--------------------------------------------------------------------------------
+
+A. SUA - src/myss-lead/VIB.SmartSales.LeadService/   (11 file)
+
+  Constants/CRMConstants.cs
+      + hang so VIB_RB_LendingAuto = "Lead - Lending Auto"
+
+  Enums/LeadRecordTypeEnum.cs
+      + gia tri LendingAuto
+
+  Common/Extensions/EnumEx.cs
+      + map VIB_RB_LendingAuto -> LeadRecordTypeEnum.LendingAuto
+
+  Common/Generators/SFGenerator.cs
+      + nhanh LendingAuto -> "smartsales.app://autoloan?refid={refId}"
+      (BAT BUOC - xem [B2])
+
+  Model/Request/CRM/CRMLeadReceiveRequest.cs
+      + ~20 field moi + mang CoBorrower[]
+      + mo rong ValidRecordTypes
+      + bo sung rule trong Validate() rieng cho Lending Auto
+
+  Model/Results/CRMLeadResult.cs
+      + field hien thi + ekycResult + coBorrowerEkycResult
+
+  Controllers/ValidateManualController.cs
+      ~ chi gan null 4 field ID khi KHONG phai Lending Auto  (xem [B3])
+
+  Repositories/Implements/CRMLeadRepository.cs
+  Repositories/Interfaces/ICRMLeadRepository.cs
+      + tham so moi cho InsertLead
+      + method UpdateEkycResult
+
+  Configurations/ILeadConfiguration.cs
+  Configurations/LeadConfiguration.cs
+      + UpdateEkycResultUrl (ST2)
+      + GetCrmAppDetailUrl  (ST3)
+      + client_id / client_secret doc tu KeyVault
+
+  Startups/ServiceStartup.cs
+      + dang ky DI cho client + service moi
+
+  Common/Resources/LeadResource.resx  (+ .Designer.cs)
+      + 4 message theo dung wording BRS:
+        - sheet 2 r84  : "Tai khoan dang nhap SmartSales khong khop voi
+                          nguoi khoi tao lead tren CRM. Vui long kiem tra lai."
+        - sheet 2 r86  : "Chuc danh cua ban khong duoc phan quyen tinh nang
+                          xac thuc KH tren SmartSales. Vui long kiem tra lai."
+        - sheet 3 r84  : "Tinh nang chi ap dung cho CCCD gan chip.
+                          Vui long kiem tra lai."
+        - sheet 4 r145 : "Trang thai xac thuc chua duoc cap nhat tren CRM.
+                          Vui long thu lai hoac lien he bo phan ho tro."
+
+B. TAO MOI - src/myss-lead/VIB.SmartSales.LeadService/   (~12 file)
+
+  Controllers/AutoLoanEkycController.cs
+      PUT  myss-lead/api/1.0/auto-loan/ekyc-result     (ST2)
+      GET  myss-lead/api/1.0/auto-loan/crm-app-detail  (ST3)
+      [ValidAuthorize("RM")]
+
+  Services/Common/CrmAppClient.cs
+      ke thua GatewayServiceBase (giong AgentAppClient)
+      - POST executeGraphQL              -> ST3
+      - PUT  card-applications/digital/{applicationId} -> ST2
+
+  Services/BusinessService/Interfaces/IAutoLoanEkycService.cs
+  Services/BusinessService/Implements/AutoLoanEkycService.cs
+
+  Common/Helpers/EkycResultMatrix.cs
+      pure function cho 20 case cua sheet R3  (xem muc 6)
+
+  Model/Request/CRM/CoBorrowerInfo.cs
+  Model/Request/CRM/UpdateEkycResultRequest.cs
+  Model/Request/CRM/CrmAppDetailRequest.cs
+  Model/Responses/CRM/UpdateEkycResultResponse.cs
+  Model/Responses/CRM/CrmAppDetailResponse.cs
+
+  Test:
+  Tests/EkycResultMatrixTests.cs               (20 case sheet R3)
+  Tests/CRMLeadReceiveRequestValidationTests.cs
+
+C. NGOAI myss-lead
+
+  plan/auto-loan-16092026/docs/
+      copy BRS_MySS_Auto Loan_20260915.xlsx vao repo de co audit trail
+
+  DB script (ban giao DBA, schema myss_lead):
+      - ALTER TABLE lead : them cot theo [B4]
+      - sua fn_crm_leadinfo_insert
+      - sua fn_crm_leadinfo_by_lead_id
+      - them fn_crm_lead_ekyc_result_update
+
+  DB config (vib_static_data) - KHONG phai code:
+      - module=EKYC / type=EKYC_EID / name=PRODUCT_CODE_LIMITED
+        -> them "LENDING" vao chuoi CSV        [B8] - BAT BUOC
+      - kiem tra cac dong nguong cho module LENDING  [B9]
+
+  src/ssale-file-pipelines/smartsale-assests/files/myss-ekyc/ekyc_config.json
+      - doi chieu voi BRS sheet R2 (93 ma loi), bo sung ma con thieu
+
+D. KHONG SUA
+  src/myss-ecs   - da du chuc nang, chi can config  [B8]
+  src/myss-ekyc  - da du chuc nang, chi can kiem tra config  [B9]
+
+
+--------------------------------------------------------------------------------
+6. THIET KE TRONG TAM : MATRIX R3
+--------------------------------------------------------------------------------
+
+BRS sheet R3 co 20 case. Input 3 chieu -> output 2 gia tri:
+
+  input  : (hasCoBorrower, borrowerResult, coBorrowerResult)
+           moi result thuoc { New, Pending, Pass, Fail }
+  output : (ekycIdResult, ekycResultXrequestID)
+
+Bang day du (BRS sheet R3 r8-r27):
+
+  #  CoBor  Borrower  CoBorrower   ekycIdResult   ekycResultXrequestID
+  -- -----  --------  -----------  -------------  ---------------------
+   1   No    New         -          <Ko update>    <Ko update>
+   2   No    Pending     -          Pending        -
+   3   No    Pass        -          Pass           -
+   4   No    Fail        -          Fail           BO Fail
+   5   Yes   Pass      Pass         Pass           -
+   6   Yes   Pass      Fail         Fail           BO Pass - CO Fail
+   7   Yes   Pass      New          Pending        BO Pass
+   8   Yes   Pass      Pending      Pending        BO Pass - CO Pending
+   9   Yes   Fail      Pass         Fail           BO Fail - CO Pass
+  10   Yes   Fail      Fail         Fail           BO Fail - CO Fail
+  11   Yes   Fail      New          Fail           BO Fail
+  12   Yes   Fail      Pending      Fail           BO Fail - CO Pending
+  13   Yes   New       Pass         Pending        CO Pass
+  14   Yes   New       Fail         Fail           CO Fail
+  15   Yes   New       New          <Ko update>    <Ko update>
+  16   Yes   New       Pending      Pending        CO Pending
+  17   Yes   Pending   Pass         Pending        BO Pending - CO Pass
+  18   Yes   Pending   Fail         Fail           BO Pending - CO Fail
+  19   Yes   Pending   New          Pending        BO Pending
+  20   Yes   Pending   Pending      Pending        BO Pending - CO Pending
+
+LUU Y 2 CASE DAC BIET (case 1 va case 15):
+  Ket qua la "<Ko update>" = KHONG goi API ST2 sang CRM.
+  KHONG duoc hieu nham thanh gui chuoi rong hoac null. Phai skip han loi goi.
+
+LY DO TACH THANH PURE FUNCTION:
+  1. Test duoc du 20 case bang unit test, khong can DB, khong can CP4I.
+  2. Change cua anh Binh (chua vao BRS) neu duoc chot thi chi doi CHO GOI,
+     khong dung vao logic ben trong.
+  3. Tranh rai if/else khap service - vi pham quy tac long nhau > 4 cap.
+
+Luong trang thai MSS (BRS sheet R3, dong tieu de):
+  NEW  =>  PENDING  =>  PASS / FAIL
+
+
+--------------------------------------------------------------------------------
+7. RUI RO
+--------------------------------------------------------------------------------
+
+R1. API crm-lead/receive dang chay PROD cho Card va Depo          MUC: CAO
+    Anh huong : moi thay doi sai co the lam chet luong the va tien gui.
+    Xu ly     : chi THEM, khong sua nhanh cu. Toan bo hanh vi moi phai
+                gate bang leadRecordType. Bat buoc regression test
+                Card + Depo truoc khi merge.
+
+R2. Dao nguoc quyet dinh "don't save" so giay to (PII)            MUC: CAO
+    Anh huong : luu so CMND/CCCD vao DB. Neu truoc day xoa vi ly do bao mat
+                thi day la buoc lui ve tuan thu.
+    Xu ly     : CHUA CODE cho toi khi tra loi duoc Q2 muc 8.
+                Neu duoc dong y: chi luu cho nhanh Lending Auto, khong bao gio
+                ghi ra log, can review cua security truoc khi merge.
+                Tham chieu blocked-rules: khong log PAN/CVV/PIN/OTP/
+                password/token/account-id/customer-id.
+
+R3. BRS sheet ST2 va ST3 co client_id + client_secret dang ro      MUC: CAO
+    Anh huong : secret da nam trong file Excel luu hanh noi bo.
+    Xu ly     : - dua vao KeyVault, dung GetValueCacheKeyVault(), tuyet doi
+                  khong de trong appsettings hay hardcode.
+                - DE XUAT ROTATE cap credential nay vi da bi lo trong tai lieu.
+                - khong copy gia tri vao code, plan, commit message hay chat.
+
+R4. Mapping appId (ST2/ST3) va leadId (Api2) chua ro               MUC: TRUNG BINH
+    ST2 endpoint co path parameter {applicationId}, ST3 query theo
+    VIB_Application__c.Id. Nhung Api2 hien chi tra leadId.
+    Xu ly     : hoi BA - xem Q3 muc 8. Neu can them field thi phai bo sung
+                vao ST1 va vao DB o Phase 1, tranh sua DB 2 lan.
+
+R5. Config PRODUCT_CODE_LIMITED chua co LENDING                    MUC: TRUNG BINH
+    Anh huong : read-id-card va verify-id-card tra INVALID_INPUT ngay lap tuc.
+    Xu ly     : dua vao checklist go-live cua tung moi truong
+                (dev / test / preprod / prod). Xem [B8].
+
+R6. Sai lech route giua BRS va code                                MUC: THAP
+    v1.0 vs 1.0, compare-faces vs comparefaces, LENDNG vs LENDING.
+    Xu ly     : thong nhat voi mobile trong buoi integrate, de nghi BA
+                sua lai trong ban BRS tiep theo.
+
+R7. Co-borrower la khai niem moi trong luong eKYC cua MySS         MUC: TRUNG BINH
+    Cac luong eKYC cu chi co 1 nguoi. Rui ro lan du lieu giua 2 nguoi
+    (anh, requestId, ket qua OCR) neu dung chung key cache/session.
+    Xu ly     : tach ro dinh danh borrower / co-borrower o moi buoc luu tru.
+
+ROLLBACK:
+  Thay doi la thuan them (additive) nen:
+    - revert commit tren myss-lead
+    - rollback DB script: drop cot moi, restore 2 function ve ban cu
+    - go "LENDING" khoi PRODUCT_CODE_LIMITED
+  Khong mat du lieu cua luong Card / Depo dang chay.
+
+
+--------------------------------------------------------------------------------
+8. CAU HOI PHAI CHOT TRUOC KHI CODE
+--------------------------------------------------------------------------------
+
+Q1. Branch base cho myss-lead la gi?
+    Repo hien dang dung o nhanh "prod".
+    Tao dev_auto_loan_ekyc tu "dev" hay tu "prod"?
+
+Q2. Tai sao crm-lead/receive dang xoa 4 field so giay to?         *** CHAN ***
+    La quyet dinh bao mat, hay chi vi Card/Depo khong can den?
+    Auto Loan bat buoc phai luu. Can nguoi da viet dong code do xac nhan.
+
+Q3. appId cua ST2/ST3 lay tu dau?
+    Api2 hien chi tra leadId. CRM co push appId xuong trong ST1 khong,
+    hay dung aclPid? Neu can them field thi phai chot TRUOC Phase 1
+    de khong phai sua DB hai lan.
+
+Q4. ekycResult luu o dau?
+    Cot moi tren bang lead cua myss-lead, hay bang rieng?
+    Service nao chiu trach nhiem ghi - myss-lead hay myss-ekyc?
+
+Q5. Change R3 cua anh Binh:
+    Xac nhan sprint nay build dung theo BRS hien tai, dung khong?
+
+Q6. myss-ecs va myss-ekyc: ai la nguoi them dong config
+    PRODUCT_CODE_LIMITED = ...,LENDING tren tung moi truong?
+
+
+--------------------------------------------------------------------------------
+9. PHASES
+--------------------------------------------------------------------------------
+
+Phase 0 - Chuan bi
+    - copy BRS vao plan/auto-loan-16092026/docs/
+    - chot Q1..Q6 muc 8
+    - tao branch
+    Ket qua: audit trail + het cau hoi chan
+
+Phase 1 - Database
+    - viet script ALTER TABLE + sua 2 function + them 1 function
+    - review voi DBA
+    Ket qua: script ban giao. LAM TRUOC, vi Q3 anh huong truc tiep den schema.
+
+Phase 2 - Mo rong ST1 va Api2 cho Lending Auto
+    - [B1] [B2] [B3] [B4] [B5] [B6]
+    - regression test Card + Depo
+    Ket qua: CRM push duoc lead Auto Loan, app mo duoc deeplink,
+             man xac thuc hien du thong tin
+
+Phase 3 - CrmAppClient + ST3
+    - client CP4I ke thua GatewayServiceBase
+    - GET crm-app-detail
+    Ket qua: lay duoc thong tin CRM de compare voi OCR (sheet 4 r9-r34)
+
+Phase 4 - EkycResultMatrix + ST2
+    - pure function 20 case
+    - PUT ekyc-result sang CRM
+    - xu ly dung 2 case "<Ko update>"
+    Ket qua: dong luong
+
+Phase 5 - Test
+    - unit test matrix 20 case + validation
+    - regression Card / Depo
+    - coverage >= 80%
+
+Phase 6 - Config va go-live
+    - env + KeyVault cho ST2/ST3
+    - PRODUCT_CODE_LIMITED them LENDING tren tung moi truong  [B8]
+    - kiem tra config nguong module LENDING  [B9]
+    - doi chieu ekyc_config.json voi BRS sheet R2
+    - cap nhat docs
+
+
+--------------------------------------------------------------------------------
+10. VERIFICATION
+--------------------------------------------------------------------------------
+
+Build va test:
+    dotnet build src/myss-lead/VIB.SmartSales.LeadService.sln
+    dotnet test
+
+Governance:
+    powershell -File .github/scripts/pre-push-governance-check.ps1
+
+Regression bat buoc (Postman):
+    - crm-lead/receive voi leadRecordType = VIB_RB_Card   -> hanh vi KHONG DOI
+    - crm-lead/receive voi leadRecordType = VIB_RB_Deposit -> hanh vi KHONG DOI
+    - crm-lead/detail cho lead Card cu                     -> hanh vi KHONG DOI
+
+Test moi:
+    - crm-lead/receive voi leadRecordType = "Lead - Lending Auto"
+      + co co-borrower / khong co co-borrower
+    - crm-lead/detail tra du field theo BRS sheet 2
+    - auto-loan/crm-app-detail
+    - auto-loan/ekyc-result cho ca 20 case sheet R3
+    - read-id-card / verify-id-card voi productid = LENDING  (sau khi co config)
+
+Kiem tra bao mat truoc khi merge:
+    - grep log: khong duoc xuat hien so CMND/CCCD trong bat ky log nao
+    - khong co client_id / client_secret trong source, appsettings hay commit
+
+
+--------------------------------------------------------------------------------
+11. DOCS IMPACT
+--------------------------------------------------------------------------------
+
+    .github/docs/feature-delivery-log.md      - them entry sau moi phase
+    .github/docs/project-changelog.md         - them muc release
+    plan/auto-loan-16092026/00-overview.txt   - file nay, cap nhat tai cho
+    WorkHub task 16092026                     - cap nhat stage + sheetTasks
+
+
+--------------------------------------------------------------------------------
+12. CHECK YAGNI / KISS / DRY
+--------------------------------------------------------------------------------
+
+YAGNI - khong build cai gi BRS khong yeu cau:
+    - khong lam retry/circuit-breaker rieng (CP4I client da co san co che)
+    - khong lam cache cho crm-app-detail (BRS khong yeu cau)
+    - khong lam man hinh admin de sua matrix R3
+    - khong dung toi ECS/EKYC vi da du chuc nang
+
+KISS:
+    - matrix R3 = 1 bang tra cuu trong 1 pure function,
+      khong phai chuoi if/else long nhau
+    - moi thay doi tren luong cu deu gate bang 1 dieu kien leadRecordType
+
+DRY - dung lai cai da co, KHONG viet moi:
+    - GatewayServiceBase / AgentAppClient   -> cho CP4I
+    - Result<T> + ToResponse()              -> cho response envelope
+    - ValidAuthorize                        -> cho phan quyen
+    - GetValueCacheKeyVault                 -> cho secret
+    - ExecuteDbWithDetailLoggingAsync       -> cho log DB
+    - toan bo API eKYC va ECS               -> khong viet lai
+
+================================================================================
+HET. Plan nay o trang thai draft.
+Chua co file source nao bi sua. Can APPROVED truoc khi bat dau Phase 0.
+================================================================================

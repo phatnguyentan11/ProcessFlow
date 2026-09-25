@@ -224,7 +224,7 @@
     var name = el("input", { class: "input", placeholder: "Tên tài liệu (tự điền từ file/link, sửa được)" });
     var ver = el("input", { class: "input", placeholder: "Phiên bản (VD: v1.0)" });
     var by = el("input", { class: "input", placeholder: "Người bàn giao (BA / Lead)" });
-    var note = el("input", { class: "input", placeholder: "Ghi chú về tài liệu này (tùy chọn)" });
+    var note = Rte.create("", "Ghi chú về tài liệu này (tùy chọn)");
 
     // Người dùng tự gõ tên → thôi tự điền đè.
     var nameTouched = false;
@@ -248,7 +248,7 @@
       withFile(t.id, src.file, baseline, function (v) {
         (t.brs = t.brs || []).push({
           id: Store.uid(), kind: kind.value, name: n, url: link,
-          note: note.value.trim(), time: now, versions: [v],
+          note: note.getHtml(), fmt: "html", time: now, versions: [v],
         });
         ctx.refresh();
         UI.toast("Đã gắn tài liệu " + kind.value + ".");
@@ -260,7 +260,7 @@
       src.node,
       name,
       el("div", { class: "grid2" }, [ver, by]),
-      note,
+      note.node,
       el("div", { class: "right" }, [
         cancelAdderBtn(docKey, ctx),
         el("button", { class: "btn btn--primary btn--sm", type: "button", text: "+ Gắn tài liệu", onclick: add }),
@@ -291,20 +291,24 @@
         docTitleNode(t, b),
         el("span", { class: "badge " + (n ? "badge--warn" : ""), text: "Đổi " + n + " lần" }),
       ]),
-      el("button", {
-        class: "entry__del", type: "button", title: "Xóa tài liệu này", text: "✕",
-        onclick: function () {
-          UI.confirm('Xóa tài liệu "' + (b.name || b.code) + '" cùng toàn bộ version?', { okText: "Xóa", danger: true })
-            .then(function (ok) {
-              if (!ok) return;
-              t.brs = (t.brs || []).filter(function (x) { return x.id !== b.id; });
-              ctx.refresh();
-            });
-        },
-      }),
+      el("div", { class: "entry__actions" }, [
+        ctx.isEditing(b.id) ? null : ctx.editBtn(b),
+        el("button", {
+          class: "entry__del", type: "button", title: "Xóa tài liệu này", text: "✕",
+          onclick: function () {
+            UI.confirm('Xóa tài liệu "' + (b.name || b.code) + '" cùng toàn bộ version?', { okText: "Xóa", danger: true })
+              .then(function (ok) {
+                if (!ok) return;
+                t.brs = (t.brs || []).filter(function (x) { return x.id !== b.id; });
+                ctx.refresh();
+              });
+          },
+        }),
+      ]),
     ]));
 
-    if (b.note) card.appendChild(el("div", { class: "brs-card__note", html: UI.escWithLinks(b.note) }));
+    if (ctx.isEditing(b.id)) card.appendChild(ctx.editBlock(b, "note", false));
+    else if (b.note) card.appendChild(el("div", { class: "brs-card__note" }, [Rte.view(b, "note")]));
 
     var vers = el("div", { class: "brs-vers" });
     versionsOf(b).forEach(function (v, i) { vers.appendChild(versionRow(t, b, v, i, ctx)); });
@@ -316,6 +320,7 @@
   function versionRow(t, b, v, idx, ctx) {
     var isBase = idx === 0;
     var isLatest = idx === versionsOf(b).length - 1;
+    var isEditing = ctx.isEditing(v.id);
     return el("div", { class: "brs-ver" + (isLatest ? " brs-ver--current" : "") }, [
       el("div", { class: "brs-ver__top" }, [
         el("span", { class: "integ-ho__ver", text: v.version || "—" }),
@@ -330,6 +335,7 @@
         v.url
           ? el("a", { href: v.url, target: "_blank", rel: "noopener noreferrer", text: "🔗 link" })
           : (v.file ? ctx.fileOpenBtn(t, v.file) : null),
+        isEditing ? null : ctx.editBtn(v),
         el("button", {
           class: "entry__del", type: "button", title: "Xóa version", text: "✕",
           onclick: function () {
@@ -342,9 +348,9 @@
           },
         }),
       ]),
-      v.changeSummary
-        ? el("div", { class: "brs-ver__note", html: UI.escWithLinks(v.changeSummary) })
-        : null,
+      isEditing
+        ? ctx.editBlock(v, "changeSummary", false)
+        : (v.changeSummary ? el("div", { class: "brs-ver__note" }, [Rte.view(v, "changeSummary")]) : null),
     ]);
   }
 
@@ -354,17 +360,17 @@
 
     var ver = el("input", { class: "input", placeholder: "Version mới (VD: v1.1)" });
     var impact = ctx.select(IMPACTS, "Nhỏ");
-    var summary = el("input", { class: "input", placeholder: "Đổi cái gì so với version trước?" });
+    var summary = Rte.create("", "Đổi cái gì so với version trước?");
     var by = el("input", { class: "input", placeholder: "Người phát hành (BA / Lead)" });
     var at = el("input", { class: "input", type: "date", value: todayStr() });
     var src = sourceRow(null); // version không tự điền tên
 
     function add() {
       var v = ver.value.trim();
-      var s = summary.value.trim();
+      var s = summary.getHtml();
       if (!v && !s) { UI.toast("Nhập version hoặc nội dung thay đổi."); return; }
       var entry = {
-        id: Store.uid(), version: v, time: new Date().toISOString(), changeSummary: s,
+        id: Store.uid(), version: v, time: new Date().toISOString(), changeSummary: s, fmt: "html",
         url: src.url.value.trim(), confirmedBy: by.value.trim(), confirmedAt: at.value,
         impact: impact.value,
       };
@@ -379,7 +385,7 @@
     return el("div", { class: "add-row add-row--ho" }, [
       src.node,
       el("div", { class: "grid2" }, [ver, impact]),
-      summary,
+      summary.node,
       el("div", { class: "grid2" }, [by, at]),
       el("div", { class: "right" }, [
         cancelAdderBtn(verKey, ctx),
@@ -411,7 +417,7 @@
     if (!isAdderOpen(entryKey)) return adderToggleBtn("+ Thêm ghi chú / thay đổi mới", entryKey, ctx);
 
     var kind = ctx.select(ENTRY_KINDS, ENTRY_NOTE);
-    var text = el("textarea", { placeholder: "Nội dung… (Ctrl+V để dán ảnh)" });
+    var editor = Rte.create("", "Nội dung… (Ctrl+V để dán ảnh)");
     var preview = el("div", { class: "img-preview" });
     var pending = []; // ảnh đã dán, chưa lưu: { file, url }
 
@@ -449,7 +455,7 @@
       });
     }
 
-    text.addEventListener("paste", function (ev) {
+    editor.editable.addEventListener("paste", function (ev) {
       if (isChange()) return;
       var items = (ev.clipboardData && ev.clipboardData.items) || [];
       var added = false;
@@ -468,7 +474,7 @@
 
     function addChange(v) {
       var entry = {
-        id: Store.uid(), time: new Date().toISOString(), text: v, channel: channel.value,
+        id: Store.uid(), time: new Date().toISOString(), text: v, fmt: "html", channel: channel.value,
         authority: authority.value, confirmedBy: by.value.trim(), confirmedAt: at.value,
         impact: impact.value,
       };
@@ -482,7 +488,7 @@
     }
 
     function addNote(v) {
-      var note = { id: Store.uid(), time: new Date().toISOString(), text: v, images: [] };
+      var note = { id: Store.uid(), time: new Date().toISOString(), text: v, fmt: "html", images: [] };
       Promise.all(pending.map(function (p) { return ApiStore.saveFile(t.id, p.file); }))
         .then(function (refs) {
           note.images = refs;
@@ -495,7 +501,7 @@
     }
 
     function add() {
-      var v = text.value.trim();
+      var v = editor.getHtml();
       if (isChange()) {
         if (!v) { UI.toast("Nhập nội dung thay đổi."); return; }
         closeAdder(entryKey);
@@ -509,7 +515,7 @@
 
     return el("div", { class: "add-row" }, [
       ctx.fileRow("Loại:", kind),
-      text,
+      editor.node,
       preview,
       changeRows,
       el("div", { class: "right" }, [
@@ -531,7 +537,7 @@
         el("span", { class: "badge", text: (b.code || b.name) + " · " + (v.version || "—") }),
         v.impact ? el("span", { class: "badge " + (IMPACT_BADGE[v.impact] || ""), text: v.impact }) : null,
       ]),
-      el("div", { html: UI.escWithLinks(v.changeSummary || "(không mô tả)") }),
+      v.changeSummary ? Rte.view(v, "changeSummary") : el("div", { class: "muted", text: "(không mô tả)" }),
       confirmLine(v),
     ]);
     if (v.file) body.appendChild(ctx.fileOpenBtn(t, v.file));
@@ -547,7 +553,7 @@
   function noteItem(t, n, ctx) {
     var body = el("div", { class: "entry__body" }, [
       el("div", { class: "chg-tags" }, [el("span", { class: "badge", text: "Note" })]),
-      n.text ? el("div", { html: UI.escWithLinks(n.text) }) : null,
+      n.text ? Rte.view(n, "text") : null,
     ]);
     var imgs = n.images || [];
     if (imgs.length) {
@@ -576,7 +582,7 @@
         c.channel ? el("span", { class: "badge", text: c.channel }) : null,
         c.impact ? el("span", { class: "badge " + (IMPACT_BADGE[c.impact] || ""), text: c.impact }) : null,
       ]),
-      el("div", { html: UI.escWithLinks(c.text) }),
+      Rte.view(c, "text"),
       confirmLine(c),
     ]);
     if (c.file) body.appendChild(ctx.fileOpenBtn(t, c.file));

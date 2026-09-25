@@ -433,6 +433,8 @@ code, .mono { font-family: var(--mono); font-size: .85em; background: var(--surf
 .todo-item__text { color: var(--text); word-break: break-word; white-space: pre-wrap; }
 .todo-item.is-done .todo-item__text { text-decoration: line-through; color: var(--muted); }
 .todo-item.is-done { opacity: .72; }
+.todo-item.is-editing { opacity: 1; }
+.todo-item .rte-edit { margin-bottom: 4px; }
 
 /* ---------- integrations 3rd-party ---------- */
 .integ-card {
@@ -467,7 +469,7 @@ code, .mono { font-family: var(--mono); font-size: .85em; background: var(--surf
 }
 .integ-notes { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .integ-notes:empty { display: none; }
-.integ-note { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
+.integ-note { display: flex; align-items: flex-start; gap: 10px; font-size: .85rem; }
 .integ-note__text { color: var(--text-soft); flex: 1; word-break: break-word; }
 .add-row--note { margin-top: 4px; }
 
@@ -492,7 +494,7 @@ code, .mono { font-family: var(--mono); font-size: .85em; background: var(--surf
   padding: 14px; min-height: 160px;
   white-space: pre-wrap; word-break: break-word; color: var(--text-soft);
 }
-.desc-card__input { min-height: 130px; }
+.desc-card__body .rte-editable { min-height: 130px; }
 .desc-card__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 
 /* ---------- task con trong sheet ---------- */
@@ -581,6 +583,59 @@ code, .mono { font-family: var(--mono); font-size: .85em; background: var(--surf
   padding: 2px 6px; border-radius: 6px; line-height: 1;
 }
 .entry__del:hover { background: var(--danger-soft); color: var(--danger); }
+.entry__actions { display: flex; gap: 2px; }
+.entry__edit:hover { background: var(--accent-soft); color: var(--accent-text); }
+
+/* ---------- rich text (rte.js) ---------- */
+.rte {
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+  transition: border var(--dur), box-shadow var(--dur);
+}
+.rte:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.rte-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px 6px;
+  border-bottom: 1px solid var(--border); background: var(--surface-2);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.rte-btn {
+  border: 1px solid transparent; background: transparent; color: var(--text-soft);
+  font: inherit; font-size: .78rem; min-width: 28px; padding: 3px 7px;
+  border-radius: 6px; cursor: pointer; line-height: 1.3;
+}
+.rte-btn:hover { background: var(--surface-sunken); color: var(--text); border-color: var(--border); }
+.rte-btn:active { background: var(--accent-soft); color: var(--accent-text); }
+.rte-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rte-b { font-weight: 700; }
+.rte-i { font-style: italic; font-family: Georgia, serif; }
+.rte-u { text-decoration: underline; }
+.rte-s { text-decoration: line-through; }
+.rte-sep { width: 1px; height: 16px; background: var(--border-strong); margin: 0 4px; }
+.rte-editable {
+  min-height: 90px; max-height: 420px; overflow-y: auto; padding: 9px 12px;
+  font-size: .9rem; line-height: 1.55; color: var(--text); outline: none;
+  word-break: break-word;
+}
+.rte-editable:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
+.rte-edit { display: flex; flex-direction: column; gap: 8px; }
+.rte-edit .right { display: flex; justify-content: flex-end; gap: 8px; }
+/* Khối sửa đặt trong card tích hợp / BRS: tách khỏi dòng phía trên. */
+.integ-history .rte-edit, .integ-notes .rte-edit, .brs-card > .rte-edit, .brs-ver .rte-edit { margin: 6px 0 8px; }
+.doc-desc { margin-top: 4px; font-size: .88rem; }
+
+/* Nội dung HTML (editor + hiển thị): bỏ pre-wrap của .entry__body để không thừa dòng trống. */
+.rte-content { white-space: normal; }
+.rte-content > :first-child, .rte-editable > :first-child { margin-top: 0; }
+.rte-content > :last-child, .rte-editable > :last-child { margin-bottom: 0; }
+.rte-content ul, .rte-content ol, .rte-editable ul, .rte-editable ol { margin: 4px 0; padding-left: 22px; }
+.rte-content h3, .rte-editable h3 { font-size: 1rem; margin: 8px 0 4px; color: var(--text); }
+.rte-content h4, .rte-editable h4 { font-size: .92rem; margin: 6px 0 3px; color: var(--text); }
+.rte-content p, .rte-editable p { margin: 4px 0; }
+.rte-content blockquote, .rte-editable blockquote {
+  margin: 6px 0; padding: 4px 12px; border-left: 3px solid var(--accent);
+  background: var(--surface-sunken); border-radius: 0 6px 6px 0;
+}
+.rte-content pre, .rte-content code { font-family: var(--mono); font-size: .84em; }
+.rte-editable a { color: var(--accent-text); }
 .entry a { color: var(--accent-text); }
 
 .add-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
